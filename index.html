@@ -327,11 +327,11 @@
           {doorStyle==='frame' && !isInvalid && !['rang_plaque','four_plaque','lv','four','evier','rangement'].includes(cab.lowerType) &&
             <rect x={x+fi} y={y+fi} width={cw-fi*2} height={h-fi*2} fill="none" stroke="#777" strokeWidth={0.65} />}
           {(cab.lowerType==='rangement' || cab.lowerType===undefined || cab.lowerType==='') && cw <= 60 && (() => {
-            const href = "images/arrangement_45.svg";
+            const href = "images/rangement_45.svg";
             return <image href={href} x={x} y={y} width={cw} height={h} preserveAspectRatio="none" />;
           })()}
           {(cab.lowerType==='rangement' || cab.lowerType===undefined || cab.lowerType==='') && cw > 60 && (() => {
-            const href = "images/arrangement_60.svg";
+            const href = "images/rangement_60.svg";
             return <image href={href} x={x} y={y} width={cw} height={h} preserveAspectRatio="none" />;
           })()}
           {cab.lowerType==='tiroirs' && (() => {
@@ -358,11 +358,10 @@
           {cab.lowerType==='lv' && (() => {
             // LAVE-VAISSELLE — SVG importé, plein cadre
             const href = "images/lv.svg";
-            return (<>
+            return (
               <image href={href} x={x} y={y} width={cw} height={h}
                 preserveAspectRatio="none" />
-              <Casserole cx={cx} ctY={ctY} cw={cw} />
-            </>);
+            );
           })()}
           {cab.lowerType==='four' && (() => {
             const href = "images/four.svg";
@@ -428,7 +427,7 @@
         const iH  = iW / (1102/951);
         const iX  = xPos;
         const iY  = yBot - iH;   // ancrée en bas
-        const href = "images/hood.svg";
+        const href = "images/capot.svg";
         return (
           <g onClick={e => { e.stopPropagation(); onSelect(); }} style={{ cursor: 'pointer' }}>
             {/* Fond meuble pleine hauteur */}
