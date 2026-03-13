@@ -58,9 +58,9 @@
 
     // ====== CONSTANTES ======
     const C = {
-      LOWER_H: 85, COUNTER_H: 4, UPPER_H: 70,
-      COL_H: 200, COL_W: 60, UPPER_FROM: 130,
-      VIEW_H: 215, MARGIN: 22,
+      LOWER_H: 85, COUNTER_H: 4, UPPER_H: 72,
+      COL_H: 215, COL_W: 60, UPPER_FROM: 143,
+      VIEW_H: 230, MARGIN: 22,
     };
     const svgY      = (cm) => C.VIEW_H - cm + C.MARGIN;
     const FLOOR_Y   = svgY(0);
@@ -1283,7 +1283,7 @@
                 {/* Barre titre du plan */}
                 <div style={{padding:'7px 14px',background:'#f9f9f9',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',fontSize:'7.5px',color:'#999',fontFamily:'monospace'}}>
                   <span>ÉLÉVATION MUR — L={wallLen}cm{colCfg!=='none'?` · COL.${colCfg}`:''}</span>
-                  <span>MB=85 · MH=70 · COL=200cm · ÉCH.1:1</span>
+                  <span>MB=85 · MH=72 · COL=215cm · ÉCH.1:1</span>
                 </div>
 
                 <svg ref={svgRef}
