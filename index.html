@@ -77,8 +77,6 @@
     ];
     const UPPER_TYPES = [
       { id: 'rangement', label: 'Rangement fermé'   },
-      { id: 'etageres',  label: 'Étagères ouvertes' },
-      { id: 'mixte',     label: 'Porte + étagères'  },
       { id: 'vide',      label: 'Espace vide'       },
       { id: 'micro',     label: 'Micro-onde'        },
     ];
@@ -222,28 +220,26 @@
     // ====== GRILLE TARIFAIRE ======
     const PRICING = {
       lower: {
-        rangement:   { 45:190, 60:230, 90:300 },
-        tiroirs:     { 45:260, 60:310, 90:390 },
-        evier:       { 45:150, 60:180, 90:220 },
-        lv:          { 45:90,  60:90  },
-        four:        { 60:130 },
-        ll:          { 60:90  },
+        rangement:   { 45:143, 60:159, 90:221 },
+        tiroirs:     { 45:398, 60:429, 90:484 },
+        evier:       { 45:152, 60:167, 90:226 },
+        lv:          { 45:77,  60:83  },
+        four:        { 60:133 },
+        ll:          { 60:83  },
       },
       upper: {
-        rangement: { 45:160, 60:195, 90:240 },
-        etageres:  { 45:120, 60:145, 90:180 },
-        mixte:     { 45:150, 60:180, 90:225 },
+        rangement: { 45:131, 60:143, 90:204 },
         vide:      { 45:0,   60:0,   90:0   },
-        micro:     { 60:210 },
+        micro:     { 60:167 },
       },
-      hood:   { 60:180, 90:220 },
+      hood:   { 60:225, 90:257 },
       col: {
-        colonne:     380,
-        frigo:       300,
-        four:        420,
-        frigo_libre: 220,
+        colonne:     { 45:361, 60:400 },
+        frigo:       { 60:385 },
+        four:        { 60:361 },
+        frigo_libre: { 60:0   },
       },
-      worktop: { low: 85, high: 220 },
+      worktop: { low: 140, high: 494 },
     };
 
     const priceLookup = (table, w) => {
@@ -254,7 +250,14 @@
       return Math.round(table[keys[0]] * w / keys[0]);
     };
 
-    const calcPrice = ({ cabs, colCfg, colTypes, extraCols, wallLen }) => {
+    const FINISH_COEFF = { melamine: 1.00, bois: 1.25, laque: 1.40 };
+
+    const finishCoeff = (finish) => FINISH_COEFF[finish?.category] ?? 1.00;
+
+    const calcPrice = ({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol }) => {
+      const cLow = finishCoeff(finishLower);
+      const cUp  = finishCoeff(finishUpper);
+      const cCol = finishCoeff(finishCol);
       let lower = 0, upper = 0, cols = 0;
       cabs.forEach(function(c) {
         const lTable = PRICING.lower[c.lowerType] || PRICING.lower.rangement;
@@ -268,11 +271,16 @@
       });
       getColPositions(wallLen, colCfg).forEach(function(_, i) {
         const ct = (colTypes && colTypes[i]) || 'colonne';
-        cols += PRICING.col[ct] || PRICING.col.colonne;
+        const tbl = PRICING.col[ct] || PRICING.col.colonne;
+        cols += priceLookup(tbl, C.COL_W);
       });
       extraCols.forEach(function(ec) {
-        cols += PRICING.col[ec.colType] || PRICING.col.colonne;
+        const tbl = PRICING.col[ec.colType] || PRICING.col.colonne;
+        cols += priceLookup(tbl, ec.w || C.COL_W);
       });
+      lower = Math.round(lower * cLow);
+      upper = Math.round(upper * cUp);
+      cols  = Math.round(cols  * cCol);
       const totalLowerW = cabs.reduce((s, c) => s + c.w, 0) / 100;
       const worktopLow  = Math.round(totalLowerW * PRICING.worktop.low);
       const worktopHigh = Math.round(totalLowerW * PRICING.worktop.high);
@@ -864,7 +872,7 @@
       const colLabels = { A:'Sans colonne', B:'Colonne gauche', C:'Colonne droite', D:'Colonnes gauche + droite', E:'Colonne centre' };
       const typeLabels = { colonne:'Rangement', frigo:'Réfrigérateur', four:'Colonne four', frigo_libre:'Frigo pose libre' };
       const lowerLabels = { rangement:'Rangement portes', tiroirs:'Tiroirs', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Four encastré', ll:'Lave-linge' };
-      const upperLabels = { rangement:'Rangement fermé', etageres:'Étagères ouvertes', mixte:'Porte + étagères', vide:'Espace vide', micro:'Micro-onde' };
+      const upperLabels = { rangement:'Rangement fermé', vide:'Espace vide', micro:'Micro-onde' };
       const doorLabels  = { smooth:'Lisse', frame:'Cadre' };
 
       const lines = [];
@@ -1466,7 +1474,7 @@
       };
 
       // ── Rendu principal ───────────────────────────────────────────────
-      const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen });
+      const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol });
       const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol });
 
       return (
@@ -1671,7 +1679,10 @@
 
 
               {/* ── Budget estimatif ── */}
-              {cabs.length > 0 && (
+              {cabs.length > 0 && (() => {
+                const hasFrigoLibre = colTypes.some(t => t==='frigo_libre') || extraCols.some(ec => ec.colType==='frigo_libre');
+                const needsElec = hasFrigoLibre || hasLV || hasLl;
+                return (
                 <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8',borderRadius:'2px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'10px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
                     Budget estimatif
@@ -1696,10 +1707,16 @@
                     </span>
                   </div>
                   <div style={{fontSize:'8.5px',color:'#bbb',marginTop:'5px',lineHeight:'1.5'}}>
-                    Fourniture + pose · hors électroménager
+                    Fourniture + pose · hors TVA
                   </div>
+                  {needsElec && (
+                    <div style={{fontSize:'8.5px',color:'#c07000',marginTop:'4px',lineHeight:'1.5',borderTop:'1px solid #f0e0c0',paddingTop:'4px'}}>
+                      ⚡ Budget électroménager non inclus{hasFrigoLibre ? ' (frigo)' : ''}{hasLV ? ' (LV)' : ''}{hasLl ? ' (LL)' : ''}
+                    </div>
+                  )}
                 </div>
-              )}
+                );
+              })()}
 
               {/* ── Finitions ── */}
               <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8'}}>
