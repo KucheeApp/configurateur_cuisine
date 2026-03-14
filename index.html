@@ -89,6 +89,52 @@
       { id: 'frigo_libre', label: 'Frigo pose libre'       },
     ];
 
+    // ====== FINITIONS ======
+    const FINISHES = {
+      bois: [
+        { id: 'rovere_cuoio',    name: 'Rovere Cuoio',    hex: '#A07040', darkHex: '#7A5228', lightHex: '#C49860' },
+        { id: 'rovere_deserto',  name: 'Rovere Deserto',  hex: '#C4A060', darkHex: '#9A7A3A', lightHex: '#DEC080' },
+        { id: 'rovere_cristallo',name: 'Rovere Cristallo', hex: '#D8CCB0', darkHex: '#B8A888', lightHex: '#EEE4CC' },
+        { id: 'rovere_nevada',   name: 'Rovere Nevada',   hex: '#8A6040', darkHex: '#624430', lightHex: '#AA8060' },
+        { id: 'rovere_nebraska', name: 'Rovere Nebraska',  hex: '#3A2E24', darkHex: '#281E16', lightHex: '#504038' },
+      ],
+      melamine: [
+        { id: 'platino',        name: 'Platino',        hex: '#E4D8BE' },
+        { id: 'creta',          name: 'Creta',          hex: '#9A8878' },
+        { id: 'grigio_cenere',  name: 'Grigio Cenere',  hex: '#C4C4BC' },
+        { id: 'grigio_daytona', name: 'Grigio Daytona', hex: '#949890' },
+        { id: 'bianco_gesso',   name: 'Bianco Gesso',   hex: '#EEEEEA' },
+        { id: 'corda',          name: 'Corda',          hex: '#B4AC9C' },
+      ],
+      laque: [
+        { id: '7011', name: '7011 · Grigio Ferro',   hex: '#485254' },
+        { id: '1019', name: '1019 · Beige',           hex: '#A89070' },
+        { id: '7035', name: '7035 · Grigio Luce',     hex: '#C4C8C4' },
+        { id: '1024', name: '1024 · Giallo Ocra',     hex: '#B48C3A' },
+        { id: '7037', name: '7037 · Grigio Polvere',  hex: '#686E6E' },
+        { id: '3000', name: '3000 · Rosso',           hex: '#B41820' },
+        { id: '7039', name: '7039 · Grigio Quarzo',   hex: '#666056' },
+        { id: '5003', name: '5003 · Blu Zaffiro',     hex: '#182040' },
+        { id: '7040', name: '7040 · Grigio Finestra', hex: '#78848E' },
+        { id: '6013', name: '6013 · Verde Canna',     hex: '#686E4C' },
+        { id: '19',   name: '19 · Bianco',            hex: '#ECECEC' },
+        { id: '8015', name: '8015 · Castagna',        hex: '#58261E' },
+        { id: '7009', name: '7009 · Grigio Verde',    hex: '#485048' },
+        { id: '21',   name: '21 · Tortora',           hex: '#D4CCBA' },
+        { id: '9005', name: '9005 · Nero',            hex: '#0C0C0C' },
+        { id: 'custom', name: 'Sur mesure',           hex: null },
+      ],
+    };
+
+    const DEFAULT_FINISH = { category: 'melamine', id: 'bianco_gesso', name: 'Bianco Gesso', hex: '#EEEEEA' };
+
+    // Retourne le fill SVG pour un finish donné (hex ou url(#pat-xxx) pour bois)
+    const getFacadeFill = (finish) => {
+      if (!finish) return '#fff';
+      if (finish.category === 'bois') return `url(#pat-${finish.id})`;
+      return finish.hex || '#fff';
+    };
+
     // ====== UTILITAIRES ======
     const getColPositions = (wl, cfg) => {
       if (cfg === 'none') return [];
@@ -418,7 +464,7 @@
       );
     };
 
-    const ColSvg = React.memo(({ xPos, doorStyle, idx, isLeft, colType, onClick, selected }) => {
+    const ColSvg = React.memo(({ xPos, doorStyle, idx, isLeft, colType, onClick, selected, colFill='#f2f2f2' }) => {
       const x = xPos + C.MARGIN, y = COL_TOP_Y, w = C.COL_W;
       const type = colType || 'colonne';
       const clipId = `colclip${idx}`;
@@ -447,7 +493,7 @@
           <defs><clipPath id={clipId}><rect x={x} y={y} width={w} height={h} /></clipPath></defs>
           {/* Corps colonne */}
           <rect x={x} y={y} width={w} height={h}
-            fill={type==='frigo' ? '#eaf2ff' : type==='four' ? '#f2f2f2' : '#f2f2f2'}
+            fill={type==='frigo' ? '#eaf2ff' : type==='four' ? '#f2f2f2' : colFill}
             stroke={selStr} strokeWidth={selW} />
           {/* Plinthe — identique à la plinthe des meubles bas */}
           <rect x={x} y={plinthY} width={w} height={C.PLINTH_H}
@@ -483,7 +529,7 @@
       );
     };
 
-    const LowerSvg = ({ cab, selected, onSelect, doorStyle }) => {
+    const LowerSvg = ({ cab, selected, onSelect, doorStyle, facadeFill='#fff' }) => {
       const x = cab.x + C.MARGIN, y = svgY(C.LOWER_H);
       const cw = cab.w;
       const h  = C.LOWER_H - C.PLINTH_H; // 75 — corps sans plinthe
@@ -496,7 +542,7 @@
 
           {/* Corps — fond + contour */}
           <rect x={x} y={y} width={cw} height={h}
-            fill={isInvalid ? '#fff0ee' : selected ? '#eef3ff' : 'white'}
+            fill={isInvalid ? '#fff0ee' : selected ? '#eef3ff' : facadeFill}
             stroke={isInvalid ? '#cc3333' : selected ? '#1a56cc' : '#333'}
             strokeWidth={selected ? 2 : 1} />
 
@@ -648,7 +694,7 @@
       );
     };
 
-    const UpperSvg = ({ cab, doorStyle, wins, selected, onSelect }) => {
+    const UpperSvg = ({ cab, doorStyle, wins, selected, onSelect, facadeFill='#fff' }) => {
       const { x, w: cw, upperMode, upperType, hoodW } = cab;
       const xPos = x + C.MARGIN;
       const y = svgY(C.UPPER_FROM + C.UPPER_H), h = C.UPPER_H, fi = 4;
@@ -689,7 +735,7 @@
           <g onClick={e => { e.stopPropagation(); onSelect(); }} style={{ cursor: 'pointer' }}>
             {/* Fond meuble pleine hauteur */}
             <rect x={xPos} y={yTop} width={cw} height={totalH}
-              fill={selected ? '#eef3ff' : 'white'}
+              fill={selected ? '#eef3ff' : facadeFill}
               stroke={selected ? '#1a56cc' : 'none'}
               strokeWidth={selected ? 1.5 : 0} />
             {/* Hotte inline */}
@@ -700,7 +746,7 @@
       return (
         <g onClick={e => { e.stopPropagation(); onSelect(); }} style={{ cursor: 'pointer' }}>
           <rect x={xPos} y={y} width={cw} height={h}
-            fill={selected ? '#eef3ff' : 'white'}
+            fill={selected ? '#eef3ff' : facadeFill}
             stroke={selStroke} strokeWidth={selWidth} />
           {doorStyle==='frame' && <rect x={xPos+fi} y={y+fi} width={cw-fi*2} height={h-fi*2} fill="none" stroke="#777" strokeWidth={0.65} />}
           {upperType==='etageres' && [1,2].map(i =>
@@ -814,7 +860,7 @@
     );
 
     // ====== RÉSUMÉ CONFIGURATION ======
-    function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price }) {
+    function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol }) {
       const colLabels = { A:'Sans colonne', B:'Colonne gauche', C:'Colonne droite', D:'Colonnes gauche + droite', E:'Colonne centre' };
       const typeLabels = { colonne:'Rangement', frigo:'Réfrigérateur', four:'Colonne four', frigo_libre:'Frigo pose libre' };
       const lowerLabels = { rangement:'Rangement portes', tiroirs:'Tiroirs', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Four encastré', ll:'Lave-linge' };
@@ -834,6 +880,9 @@
         lines.push('Colonnes ajoutées : ' + extraCols.map(ec => (typeLabels[ec.colType]||ec.colType) + ' ' + ec.w + 'cm').join(', '));
 
       lines.push('Style de porte : ' + (doorLabels[doorStyle] || doorStyle));
+      lines.push('Finition meubles bas  : ' + finishLower.name + (finishLower.category==='bois' ? ' (bois)' : finishLower.category==='laque' ? ' (laque)' : ' (mélamine)'));
+      lines.push('Finition meubles hauts : ' + finishUpper.name + (finishUpper.category==='bois' ? ' (bois)' : finishUpper.category==='laque' ? ' (laque)' : ' (mélamine)'));
+      lines.push('Finition colonnes     : ' + finishCol.name + (finishCol.category==='bois' ? ' (bois)' : finishCol.category==='laque' ? ' (laque)' : ' (mélamine)'));
 
       if (wins.length)
         lines.push('Fenêtres : ' + wins.map(w => w.w + 'cm à x=' + w.pos + 'cm').join(', '));
@@ -960,6 +1009,72 @@
       );
     }
 
+    // ====== FINISH PICKER ======
+    function FinishPicker({ label, finish, onSelect, customColor, onCustomColor }) {
+      const [tab, setTab] = React.useState(finish.category || 'melamine');
+      const tabStyle = (t) => ({
+        fontSize:'9px', letterSpacing:'1.5px', padding:'4px 8px', cursor:'pointer',
+        fontFamily:'Courier New,monospace', border:'none',
+        background: tab===t ? '#222' : '#e8e8e8',
+        color: tab===t ? '#fff' : '#555',
+      });
+      const swatchBorder = (f) => finish.id === f.id && finish.category === tab
+        ? '2px solid #1a56cc' : '2px solid transparent';
+      return (
+        <div style={{marginBottom:'14px'}}>
+          <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'6px',textTransform:'uppercase'}}>{label}</div>
+          <div style={{display:'flex',gap:'2px',marginBottom:'8px'}}>
+            {['bois','melamine','laque'].map(t => (
+              <button key={t} style={tabStyle(t)} onClick={() => setTab(t)}>
+                {t==='melamine'?'MÉLAMINE':t.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          {tab !== 'laque' ? (
+            <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>
+              {FINISHES[tab].map(f => (
+                <div key={f.id} title={f.name}
+                  onClick={() => onSelect({ ...f, category: tab })}
+                  style={{
+                    width:'28px', height:'28px', cursor:'pointer',
+                    background: tab==='bois'
+                      ? `linear-gradient(to right, ${f.darkHex} 0%, ${f.hex} 30%, ${f.lightHex} 55%, ${f.hex} 72%, ${f.darkHex} 85%, ${f.lightHex} 100%)`
+                      : f.hex,
+                    border: swatchBorder(f),
+                    boxSizing:'border-box',
+                    outline: finish.id===f.id && finish.category===tab ? '1px solid #1a56cc' : 'none',
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={{display:'flex',flexWrap:'wrap',gap:'5px'}}>
+              {FINISHES.laque.filter(f => f.id !== 'custom').map(f => (
+                <div key={f.id} title={f.name}
+                  onClick={() => onSelect({ ...f, category: 'laque' })}
+                  style={{
+                    width:'28px', height:'28px', cursor:'pointer',
+                    background: f.hex,
+                    border: swatchBorder(f),
+                    boxSizing:'border-box',
+                    outline: finish.id===f.id && finish.category==='laque' ? '1px solid #1a56cc' : 'none',
+                  }}
+                />
+              ))}
+              <div style={{display:'flex',alignItems:'center',gap:'4px',width:'100%',marginTop:'4px'}}>
+                <input type="color" value={customColor}
+                  onChange={e => { onCustomColor(e.target.value); onSelect({ id:'custom', name:'Sur mesure', hex: e.target.value, category:'laque' }); }}
+                  style={{width:'28px',height:'28px',border:'1px solid #ccc',cursor:'pointer',padding:'1px'}}
+                />
+                <span style={{fontSize:'9px',color:'#888',letterSpacing:'1px'}}>SUR MESURE</span>
+              </div>
+            </div>
+          )}
+          <div style={{fontSize:'9px',color:'#aaa',marginTop:'5px',letterSpacing:'1px'}}>{finish.name}</div>
+        </div>
+      );
+    }
+
     // ====== COMPOSANT PRINCIPAL ======
     function KitchenDesigner() {
       const [wallLen,        setWallLen]        = React.useState(360);
@@ -981,6 +1096,12 @@
       const [draggingWin,    setDraggingWin]     = React.useState(null);
       const [statusMsg,      setStatusMsg]       = React.useState(null);
       const [canvasW,        setCanvasW]         = React.useState(800);
+      const [finishLower,    setFinishLower]     = React.useState(DEFAULT_FINISH);
+      const [finishUpper,    setFinishUpper]     = React.useState(DEFAULT_FINISH);
+      const [finishCol,      setFinishCol]       = React.useState(DEFAULT_FINISH);
+      const [customColorLow, setCustomColorLow]  = React.useState('#888888');
+      const [customColorUp,  setCustomColorUp]   = React.useState('#888888');
+      const [customColorCol, setCustomColorCol]  = React.useState('#888888');
 
       const svgRef    = React.useRef(null);
       const canvasRef = React.useRef(null);
@@ -1346,7 +1467,7 @@
 
       // ── Rendu principal ───────────────────────────────────────────────
       const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen });
-      const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price });
+      const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol });
 
       return (
         <div style={{fontFamily:'Courier New, monospace',background:'#fff',minHeight:'100vh',color:'#222',display:'flex',flexDirection:'column'}}
@@ -1580,6 +1701,34 @@
                 </div>
               )}
 
+              {/* ── Finitions ── */}
+              <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8'}}>
+                <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'12px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
+                  Finitions façades
+                </div>
+                <FinishPicker
+                  label="Meubles bas"
+                  finish={finishLower}
+                  onSelect={setFinishLower}
+                  customColor={customColorLow}
+                  onCustomColor={setCustomColorLow}
+                />
+                <FinishPicker
+                  label="Meubles hauts"
+                  finish={finishUpper}
+                  onSelect={setFinishUpper}
+                  customColor={customColorUp}
+                  onCustomColor={setCustomColorUp}
+                />
+                <FinishPicker
+                  label="Colonnes"
+                  finish={finishCol}
+                  onSelect={setFinishCol}
+                  customColor={customColorCol}
+                  onCustomColor={setCustomColorCol}
+                />
+              </div>
+
               <div style={{marginTop:'auto',paddingTop:'10px',borderTop:'1px solid #e8e8e8'}}>
                 {phase==='layout' ? (
                   <Btn onClick={() => setPhase('finish')} style={{width:'100%',padding:'10px',textAlign:'center',letterSpacing:'1px',fontSize:'9px'}}>
@@ -1624,6 +1773,20 @@
                   xmlns="http://www.w3.org/2000/svg"
                   style={{display:'block',cursor:draggingWin?'grabbing':'default',userSelect:'none'}}
                   onMouseMove={onSvgMouseMove} onMouseUp={onSvgMouseUp} onMouseLeave={onSvgMouseUp}>
+
+                  {/* Patterns bois */}
+                  <defs>
+                    {FINISHES.bois.map(f => (
+                      <pattern key={f.id} id={`pat-${f.id}`} x="0" y="0" width="18" height="300" patternUnits="userSpaceOnUse">
+                        <rect width="18" height="300" fill={f.hex}/>
+                        <rect x="0"  width="1.2" height="300" fill={f.darkHex} opacity="0.7"/>
+                        <rect x="4"  width="0.7" height="300" fill={f.lightHex} opacity="0.6"/>
+                        <rect x="7"  width="1.5" height="300" fill={f.darkHex} opacity="0.5"/>
+                        <rect x="11" width="0.8" height="300" fill={f.lightHex} opacity="0.55"/>
+                        <rect x="15" width="1.0" height="300" fill={f.darkHex} opacity="0.45"/>
+                      </pattern>
+                    ))}
+                  </defs>
 
                   {/* Grille légère */}
                   <g>
@@ -1670,18 +1833,20 @@
                     const isLeft = (colCfg==='A' && i===0) || colCfg==='C' || colCfg==='D';
                     return <ColSvg key={i} xPos={cx} doorStyle={doorStyle} idx={i} isLeft={isLeft}
                       colType={colTypes[i]} selected={selectedColIdx===i}
+                      colFill={getFacadeFill(finishCol)}
                       onClick={e => { e.stopPropagation(); setSelectedColIdx(prev=>prev===i?null:i); setSelLowerId(null); setSelUpperId(null); setSelectedExtraColId(null); }} />;
                   })}</g>
 
                   {/* Meubles hauts */}
                   <g>{cabs.map(c => <UpperSvg key={c.id} cab={c} doorStyle={doorStyle} wins={wins}
                     selected={selUpperId===c.id}
+                    facadeFill={getFacadeFill(finishUpper)}
                     onSelect={() => { setSelUpperId(prev=>prev===c.id?null:c.id); setSelLowerId(null); setSelectedColIdx(null); setSelectedExtraColId(null); }} />)}</g>
 
                   {/* Meubles bas */}
                   <g>{cabs.map(c => <LowerSvg key={c.id} cab={c} selected={selLowerId===c.id}
                     onSelect={() => { setSelLowerId(prev=>prev===c.id?null:c.id); setSelUpperId(null); setSelectedColIdx(null); setSelectedExtraColId(null); }}
-                    doorStyle={doorStyle} />)}</g>
+                    doorStyle={doorStyle} facadeFill={getFacadeFill(finishLower)} />)}</g>
 
                   {/* Plinthe — passe unique sur toute la rangée */}
                   {(() => {
