@@ -240,14 +240,38 @@
     // ====== COMPOSANTS SVG ======
 
     const Casserole = ({ cx, ctY, cw }) => {
-      const imgW = Math.min(cw * 0.85, cw - 4);
-      const imgH = imgW * (429 / 2441);
-      const imgX = cx - imgW / 2;
-      const imgY = ctY - imgH;
-      const href = "images/casserole.svg";
-      return <image href={href} x={imgX} y={imgY} width={imgW} height={imgH}
-        preserveAspectRatio="xMidYMid meet" />;
-    };;
+      // Taille fixe indépendante de la largeur du meuble
+      const panW  = 34;
+      const panH  = 22;
+      const panX  = cx - panW / 2;
+      const panY  = ctY - panH;
+
+      const lidH  = 4;
+      const lidY  = panY - lidH;
+      const knobW = 6, knobH = 3;
+      const knobX = cx - knobW / 2;
+      const knobY = lidY - knobH;
+
+      const hW = 12, hH = 4;
+      const hY = panY + panH * 0.35;
+
+      return (
+        <g>
+          <rect x={panX} y={panY} width={panW} height={panH} rx={0.8}
+            fill="#d0d0d0" stroke="#666" strokeWidth={0.8}/>
+          <rect x={panX+3} y={panY+3} width={3} height={panH-6} rx={1}
+            fill="white" opacity={0.18}/>
+          <rect x={panX-2} y={lidY} width={panW+4} height={lidH} rx={1}
+            fill="#c0c0c0" stroke="#666" strokeWidth={0.7}/>
+          <rect x={knobX} y={knobY} width={knobW} height={knobH} rx={1.2}
+            fill="#aaa" stroke="#666" strokeWidth={0.6}/>
+          <rect x={panX-hW} y={hY} width={hW} height={hH} rx={2}
+            fill="#888" stroke="#555" strokeWidth={0.6}/>
+          <rect x={panX+panW} y={hY} width={hW} height={hH} rx={2}
+            fill="#888" stroke="#555" strokeWidth={0.6}/>
+        </g>
+      );
+    };
 
     const Mitigeur = ({ cx, ctY }) => {
       // Source bbox dans le dessin de référence (viewBox 340×560) :
@@ -285,40 +309,152 @@
       );
     };
 
+    // ── COMPOSANTS SVG INLINE (remplacement des images externes) ──
+
+    const InlineColonne = ({ x, y, w, h }) => {
+      const fi = 4, mid = y + h * 0.52;
+      const hW = w * 0.32, hH = 2;
+      return (
+        <g>
+          <line x1={x+fi} y1={mid} x2={x+w-fi} y2={mid} stroke="#bbb" strokeWidth={0.7}/>
+          <rect x={x+fi} y={y+fi} width={w-fi*2} height={mid-y-fi*1.5} rx={0.5} fill="none" stroke="#bbb" strokeWidth={0.5}/>
+          {/* poignée porte HAUTE → en bas de la porte */}
+          <rect x={x+w/2-hW/2} y={mid-fi*0.75-hH-3} width={hW} height={hH} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+          <rect x={x+fi} y={mid+fi*0.5} width={w-fi*2} height={h-mid+y-fi*1.5} rx={0.5} fill="none" stroke="#bbb" strokeWidth={0.5}/>
+          {/* poignée porte BASSE → en haut de la porte */}
+          <rect x={x+w/2-hW/2} y={mid+fi*0.5+4} width={hW} height={hH} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+        </g>
+      );
+    };
+
+    const InlineFrigo = ({ x, y, w, h }) => {
+      const fridgeH = Math.round(h * 0.67);
+      const fzH    = h - fridgeH;
+      const sepY   = y + fridgeH;
+      const cx     = x + w / 2;
+      const fy     = sepY + fzH / 2 + 3; // centre de la petite porte
+      return (
+        <g>
+          <line x1={x+2} y1={sepY} x2={x+w-2} y2={sepY} stroke="#7a9acc" strokeWidth={1}/>
+          {/* Grande porte haut */}
+          <rect x={x+3} y={y+3} width={w-6} height={fridgeH-4} rx={0.5} fill="none" stroke="#7a9acc" strokeWidth={0.5}/>
+          {/* Petite porte bas = congélateur */}
+          <rect x={x+3} y={sepY+2} width={w-6} height={fzH-5} rx={0.5} fill="none" stroke="#7a9acc" strokeWidth={0.5}/>
+          {/* ❄ même symbole que le bouton menu */}
+          <text x={cx} y={fy} textAnchor="middle" fontSize={10} fill="#7a9acc" fontFamily="Arial, sans-serif">❄</text>
+          {[0,1,2].map(i => <line key={i} x1={x+10+i*9} y1={y+h-8} x2={x+10+i*9} y2={y+h-4} stroke="#7a9acc" strokeWidth={0.7}/>)}
+        </g>
+      );
+    };
+
+    const InlineFourColonne = ({ x, y, w, h }) => {
+      // Four: bas à 80cm du sol → bottom = y + h - 80, hauteur four = 60px (proportions MB four)
+      const ovenBot = y + h - 80;
+      const ovenH   = 60;
+      const ovenTop = ovenBot - ovenH;    // y + h - 140
+      const bandeauH = 14;
+      const doorY   = ovenTop + bandeauH;
+      const glassH  = ovenH - bandeauH - 8;
+      const cx = x + w / 2;
+      const ox = x + 3, ow = w - 6;
+      return (
+        <g>
+          {/* Rangement haut: poignée en BAS de la porte */}
+          <rect x={x+4} y={y+4} width={w-8} height={ovenTop-y-8} rx={0.5} fill="none" stroke="#bbb" strokeWidth={0.5}/>
+          <rect x={cx-12} y={ovenTop-y > 14 ? ovenTop-12 : y+(ovenTop-y)/2} width={24} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.3}/>
+          <line x1={x} y1={ovenTop-2} x2={x+w} y2={ovenTop-2} stroke="#888" strokeWidth={0.8}/>
+          {/* Corps four */}
+          <rect x={ox} y={ovenTop} width={ow} height={ovenH} rx={1} fill="#f2f2f2" stroke="#666" strokeWidth={0.7}/>
+          {/* Bandeau commandes */}
+          <rect x={ox} y={ovenTop} width={ow} height={bandeauH} rx={0.5} fill="#d8d4c8" stroke="#888" strokeWidth={0.5}/>
+          {[ox+8, cx, ox+ow-8].map((kx,i) => (
+            <g key={i}>
+              <circle cx={kx} cy={ovenTop+7} r={3} fill="#ccc" stroke="#888" strokeWidth={0.5}/>
+              <circle cx={kx} cy={ovenTop+7} r={1.2} fill="#aaa"/>
+            </g>
+          ))}
+          {/* Poignée CENTRÉE */}
+          <rect x={cx-14} y={doorY+2} width={28} height={2.5} rx={1.2} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
+          {/* Vitre */}
+          <rect x={ox+2} y={doorY+6} width={ow-4} height={glassH} rx={0.5} fill="#1a1a2e" opacity={0.85} stroke="#444" strokeWidth={0.5}/>
+          <line x1={ox+5} y1={doorY+8} x2={ox+9} y2={doorY+glassH+4} stroke="white" strokeWidth={1.5} opacity={0.07}/>
+          <line x1={x} y1={ovenBot+2} x2={x+w} y2={ovenBot+2} stroke="#888" strokeWidth={0.8}/>
+          {/* Rangement bas: poignée en HAUT de la porte */}
+          <rect x={x+4} y={ovenBot+5} width={w-8} height={y+h-ovenBot-9} rx={0.5} fill="none" stroke="#bbb" strokeWidth={0.5}/>
+          <rect x={cx-12} y={ovenBot+8} width={24} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.3}/>
+        </g>
+      );
+    };
+
+    const InlineFrigoLibre = ({ x, y, w, h }) => {
+      const fh = Math.round(h * 180 / 215);
+      const fy = y + h - fh;
+      const cx = x + w / 2;
+      return (
+        <g>
+          <rect x={x} y={fy} width={w} height={fh} rx={4} fill="white" stroke="#333" strokeWidth={1.5}/>
+          <rect x={x+3} y={fy+3} width={w-6} height={fh-10} rx={3} fill="none" stroke="#ccc" strokeWidth={0.5}/>
+          <line x1={x+4} y1={fy+fh*0.34} x2={x+w-4} y2={fy+fh*0.34} stroke="#ccc" strokeWidth={0.5}/>
+          <text x={cx} y={fy+fh*0.6} textAnchor="middle" fontSize={14} fill="#7a9acc" fontFamily="Arial, sans-serif">❄</text>
+          {[0,1,2,3,4].map(i => <line key={i} x1={x+6+i*9} y1={y+h-8} x2={x+6+i*9} y2={y+h-4} stroke="#888" strokeWidth={0.7}/>)}
+        </g>
+      );
+    };
+
+    const InlineCapot = ({ x, y, w, h }) => {
+      const bxOff = w * 0.14;
+      const pts = `${x+bxOff},${y} ${x+w-bxOff},${y} ${x+w-1},${y+h} ${x+1},${y+h}`;
+      return (
+        <g>
+          <polygon points={pts} fill="#e4e4e4" stroke="#555" strokeWidth={0.7}/>
+          {[0.3, 0.5, 0.7].map((r, i) => {
+            const lw = w*(0.55 + r*0.28), lx = x+(w-lw)/2, ly = y+h*r;
+            return <line key={i} x1={lx} y1={ly} x2={lx+lw} y2={ly} stroke="#bbb" strokeWidth={0.4}/>;
+          })}
+          <rect x={x+5} y={y+h-7} width={w-10} height={4} rx={0.5} fill="#ffffdd" stroke="#bbb" strokeWidth={0.3}/>
+          <circle cx={x+w*0.82} cy={y+h*0.15} r={3.5} fill="#ccc" stroke="#888" strokeWidth={0.4}/>
+          <circle cx={x+w*0.82} cy={y+h*0.15} r={1.5} fill="#aaa"/>
+        </g>
+      );
+    };
+
     const ColSvg = React.memo(({ xPos, doorStyle, idx, isLeft, colType, onClick, selected }) => {
-      const x = xPos + C.MARGIN, y = COL_TOP_Y, w = C.COL_W, h = C.COL_H;
+      const x = xPos + C.MARGIN, y = COL_TOP_Y, w = C.COL_W;
       const type = colType || 'colonne';
       const clipId = `colclip${idx}`;
+
+      // frigo_libre : descend jusqu'au sol, PAS de plinthe
+      if (type === 'frigo_libre') {
+        const h = C.COL_H;
+        return (
+          <g onClick={onClick} style={{ cursor: 'pointer' }}>
+            <InlineFrigoLibre x={x} y={y} w={w} h={h}/>
+            {isLeft
+              ? <text x={x+w/2} y={y+h-10} textAnchor="middle" fontSize={8} fill="#888">←</text>
+              : <text x={x+w/2} y={y+h-10} textAnchor="middle" fontSize={8} fill="#888">→</text>}
+          </g>
+        );
+      }
+
+      // Toutes les autres colonnes : corps réduit + plinthe commune
+      const h       = C.COL_H - C.PLINTH_H;   // 205px
+      const plinthY = svgY(C.PLINTH_H);         // y de la plinthe
+      const selStr  = selected ? '#1a56cc' : '#333';
+      const selW    = selected ? 2 : 1.5;
+
       return (
         <g onClick={onClick} style={{ cursor: 'pointer' }}>
           <defs><clipPath id={clipId}><rect x={x} y={y} width={w} height={h} /></clipPath></defs>
+          {/* Corps colonne */}
           <rect x={x} y={y} width={w} height={h}
-            fill={type==='frigo' ? '#ddeeff' : type==='four' ? '#f0ece0' : type==='frigo_libre' ? '#ddeeff' : '#e8e8e8'}
-            stroke={selected ? '#1a56cc' : '#333'} strokeWidth={selected ? 2 : 1.5} />
-          {type === 'colonne' && (() => {
-            const href = "images/colonne.svg";
-            return <image href={href} x={x} y={y} width={w} height={h}
-              preserveAspectRatio="none" clipPath={`url(#${clipId})`} />;
-          })()}
-          {type === 'frigo' && (() => {
-            const href = "images/frigo.svg";
-            return <image href={href} x={x} y={y} width={w} height={h}
-              preserveAspectRatio="none" clipPath={`url(#${clipId})`} />;
-          })()}
-          {type === 'four' && (() => {
-            // SVG colonne four — étirement plein cadre
-            const fW   = w;
-            const fH   = h;
-            const fX   = x;
-            const fY   = y;
-            const href = "images/four_colonne.svg";
-            return <image href={href} x={fX} y={fY} width={fW} height={fH} clipPath={`url(#${clipId})`} preserveAspectRatio="none" />;
-          })()}
-          {type === 'frigo_libre' && (() => {
-            const href = "images/frigo_libre.svg";
-            return <image href={href} x={x} y={y} width={w} height={h}
-              preserveAspectRatio="none" clipPath={`url(#${clipId})`} />;
-          })()}
+            fill={type==='frigo' ? '#eaf2ff' : type==='four' ? '#f2f2f2' : '#f2f2f2'}
+            stroke={selStr} strokeWidth={selW} />
+          {/* Plinthe — identique à la plinthe des meubles bas */}
+          <rect x={x} y={plinthY} width={w} height={C.PLINTH_H}
+            fill="#e0e0e0" stroke="#555" strokeWidth={0.8}/>
+          {type === 'colonne' && <InlineColonne x={x} y={y} w={w} h={h}/>}
+          {type === 'frigo'   && <InlineFrigo   x={x} y={y} w={w} h={h}/>}
+          {type === 'four'    && <InlineFourColonne x={x} y={y} w={w} h={h}/>}
           {doorStyle==='frame' && type==='colonne' &&
             <rect x={x+5} y={y+5} width={w-10} height={h-10} fill="none" stroke="#888" strokeWidth={0.7} />}
           {isLeft
@@ -436,7 +572,7 @@
           {cab.lowerType==='four' && (() => {
             const px=x+3, pw=cw-6, bh=14, doorY=y+20, doorH=h-28, glassH=doorH-8;
             return (<>
-              <rect x={px} y={y+3} width={pw} height={h-6} rx={1} fill="#f0ece0" stroke="#555" strokeWidth={0.8}/>
+              <rect x={px} y={y+3} width={pw} height={h-6} rx={1} fill="#f2f2f2" stroke="#555" strokeWidth={0.8}/>
               <rect x={px} y={y+3} width={pw} height={bh} rx={1} fill="#e0dcd0" stroke="#555" strokeWidth={0.6}/>
               {[px+8, cx, px+pw-8].map((kx,i) => (<g key={i}>
                 <circle cx={kx} cy={y+10} r={3} fill="#ccc" stroke="#888" strokeWidth={0.5}/>
@@ -462,7 +598,6 @@
               <rect x={px+1} y={doorY} width={pw-2} height={doorH} rx={0.5} fill="#efefef" stroke="#777" strokeWidth={0.5}/>
               <rect x={px+4} y={doorY+3} width={pw-8} height={doorH-6} rx={0.5} fill="none" stroke="#ddd" strokeWidth={0.5}/>
               <rect x={cx-hw/2} y={doorY+5} width={hw} height={2} rx={1} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
-              {[0,1,2,3].map(i => <line key={i} x1={px+4} y1={doorY+doorH-18+i*4} x2={px+pw-4} y2={doorY+doorH-18+i*4} stroke="#ddd" strokeWidth={0.4}/>)}
             </>);
           })()}
 
@@ -550,7 +685,6 @@
         const iH  = iW / (1102/951);
         const iX  = xPos;
         const iY  = yBot - iH;   // ancrée en bas
-        const href = "images/capot.svg";
         return (
           <g onClick={e => { e.stopPropagation(); onSelect(); }} style={{ cursor: 'pointer' }}>
             {/* Fond meuble pleine hauteur */}
@@ -558,8 +692,8 @@
               fill={selected ? '#eef3ff' : 'white'}
               stroke={selected ? '#1a56cc' : 'none'}
               strokeWidth={selected ? 1.5 : 0} />
-            {/* Hotte SVG */}
-            <image href={href} x={iX} y={iY} width={iW} height={iH} />
+            {/* Hotte inline */}
+            <InlineCapot x={iX} y={iY} w={iW} h={iH}/>
           </g>
         );
       }
@@ -633,13 +767,24 @@
               )}
             </>);
           })()}
-          {upperType!=='micro' && upperType!=='etageres' && upperType!=='mixte' && upperType!=='vide' && upperType!=='hood' && cw <= 60 && (() => {
-            const href = "images/rangement_haut_45.svg";
-            return <image href={href} x={xPos} y={y} width={cw} height={h} preserveAspectRatio="none" />;
-          })()}
-          {upperType!=='micro' && upperType!=='etageres' && upperType!=='mixte' && upperType!=='vide' && upperType!=='hood' && cw > 60 && (() => {
-            const href = "images/rangement_haut_60.svg";
-            return <image href={href} x={xPos} y={y} width={cw} height={h} preserveAspectRatio="none" />;
+          {upperType!=='micro' && upperType!=='etageres' && upperType!=='mixte' && upperType!=='vide' && upperType!=='hood' && (() => {
+            const hw = Math.min(cw * 0.38, 22);
+            if (cw > 60) {
+              const sep = xPos + cw / 2;
+              const pw  = cw / 2 - 3;
+              return (<>
+                <line x1={sep} y1={y+1} x2={sep} y2={y+h-1} stroke="#ccc" strokeWidth={0.5}/>
+                <rect x={xPos+2}   y={y+3} width={pw-1} height={h-6} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
+                <rect x={sep+1}    y={y+3} width={pw-1} height={h-6} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
+                <rect x={xPos+cw*0.25-hw/2} y={y+h-8} width={hw} height={2} rx={1} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
+                <rect x={xPos+cw*0.75-hw/2} y={y+h-8} width={hw} height={2} rx={1} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
+              </>);
+            } else {
+              return (<>
+                <rect x={xPos+2} y={y+3} width={cw-4} height={h-6} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
+                <rect x={xPos+cw/2-hw/2} y={y+h-8} width={hw} height={2} rx={1} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
+              </>);
+            }
           })()}
         </g>
       );
@@ -893,41 +1038,55 @@
         let newCabs = cabs.map(c => c.id===id ? {...c,...changes} : c);
 
         if (changes.w !== undefined) {
-          // Calcul de la somme sans le dernier meuble
-          // Si le reste disponible pour le dernier meuble est insuffisant,
-          // on supprime automatiquement le dernier meuble et on réessaie — en chaîne.
           let working = [...newCabs];
-          while (working.length > 1) {
-            const sumAll = working.reduce((a,c) => a + c.w, 0);
-            const lastIdx = working.length - 1;
-            const sumBefore = sumAll - working[lastIdx].w;
-            const lastW = totalZone - sumBefore;
+          const sumAfter = working.reduce((a,c) => a + c.w, 0);
+          const targetIsLast = working[working.length - 1].id === id;
 
-            if (lastW >= 15) {
-              // Le dernier meuble absorbe le reste — type rangement si non-standard
-              const last = working[lastIdx];
-              const lastType = isStdWidth(lastW)
-                ? fixLowerType(last.lowerType, lastW, hasColFour, working, last.id)
-                : 'rangement';
-              working[lastIdx] = {...last, w: lastW, lowerType: lastType};
-              break;
-            } else if (lastW <= 0) {
-              // Le dernier meuble n'a plus de place : on le supprime
-              working = working.slice(0, lastIdx);
-            } else {
-              // Reste entre 1 et 14cm : trop petit pour un meuble, on supprime aussi
-              working = working.slice(0, lastIdx);
+          if (targetIsLast && sumAfter < totalZone) {
+            // Le meuble réduit est le DERNIER : insérer un ou plusieurs meubles pour combler
+            let gap = totalZone - sumAfter;
+            while (gap >= 15) {
+              const slice = gap >= 60 ? 60 : gap >= 45 ? 45 : gap;
+              if (slice < 15) break;
+              working.push({
+                id: Date.now() + Math.random(),
+                x: 0, w: slice,
+                lowerType: 'rangement',
+                upperMode: 'upper', upperType: 'rangement',
+                hoodW: 60, hasPlaque: false,
+              });
+              gap -= slice;
             }
-          }
+          } else {
+            // Logique existante : le dernier meuble absorbe le delta
+            while (working.length > 1) {
+              const sumAll = working.reduce((a,c) => a + c.w, 0);
+              const lastIdx = working.length - 1;
+              const sumBefore = sumAll - working[lastIdx].w;
+              const lastW = totalZone - sumBefore;
 
-          // Sécurité : si on n'a plus qu'un seul meuble, il prend toute la zone
-          if (working.length === 1) {
-            const targetW = totalZone;
-            const only = working[0];
-            const onlyType = isStdWidth(targetW)
-              ? fixLowerType(only.lowerType, targetW, hasColFour, working, only.id)
-              : 'rangement';
-            working[0] = {...only, w: targetW, lowerType: onlyType};
+              if (lastW >= 15) {
+                const last = working[lastIdx];
+                const lastType = isStdWidth(lastW)
+                  ? fixLowerType(last.lowerType, lastW, hasColFour, working, last.id)
+                  : 'rangement';
+                working[lastIdx] = {...last, w: lastW, lowerType: lastType};
+                break;
+              } else if (lastW <= 0) {
+                working = working.slice(0, lastIdx);
+              } else {
+                working = working.slice(0, lastIdx);
+              }
+            }
+
+            if (working.length === 1) {
+              const targetW = totalZone;
+              const only = working[0];
+              const onlyType = isStdWidth(targetW)
+                ? fixLowerType(only.lowerType, targetW, hasColFour, working, only.id)
+                : 'rangement';
+              working[0] = {...only, w: targetW, lowerType: onlyType};
+            }
           }
 
           newCabs = splitOversized(working);
@@ -1482,7 +1641,9 @@
 
                   {/* Colonnes additionnelles */}
                   <g>{extraCols.map(ec => {
-                    const x = C.MARGIN + ec.x, y = COL_TOP_Y, w = ec.w, h = C.COL_H;
+                    const x = C.MARGIN + ec.x, y = COL_TOP_Y, w = ec.w;
+                    const h = C.COL_H - C.PLINTH_H;
+                    const plinthY = svgY(C.PLINTH_H);
                     const clipId = `extracol${ec.id}`;
                     const isSel = selectedExtraColId === ec.id;
                     return (
@@ -1490,12 +1651,11 @@
                         <defs><clipPath id={clipId}><rect x={x} y={y} width={w} height={h}/></clipPath></defs>
                         <rect x={x} y={y} width={w} height={h} fill="#e8e8e8"
                           stroke={isSel ? '#1a56cc' : '#333'} strokeWidth={isSel ? 2 : 1.5}/>
-                        <image
-                          href={ec.colType==='four' && ec.w===60
-                            ? "images/four_colonne.svg"
-                            : "images/frigo.svg"}
-                          x={x} y={y} width={w} height={h}
-                          preserveAspectRatio="none" clipPath={`url(#${clipId})`}/>
+                        <rect x={x} y={plinthY} width={w} height={C.PLINTH_H}
+                          fill="#e8e8e8" stroke="#555" strokeWidth={0.8}/>
+                        {ec.colType==='four' && ec.w===60
+                          ? <InlineFourColonne x={x} y={y} w={w} h={h}/>
+                          : <InlineFrigo x={x} y={y} w={w} h={h}/>}
                       </g>
                     );
                   })}</g>
