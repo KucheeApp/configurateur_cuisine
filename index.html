@@ -73,8 +73,6 @@
       { id: 'evier',       label: 'Sous évier',           widths: null,     noColFour: false, unique: true },
       { id: 'lv',          label: 'Lave-vaisselle',       widths: [45, 60], noColFour: false, unique: true },
       { id: 'four',        label: 'Four encastré',        widths: [60],     noColFour: true  },
-      { id: 'rang_plaque', label: 'Rangement + plaque',   widths: [60, 90], noColFour: false },
-
     ];
     const UPPER_TYPES = [
       { id: 'rangement', label: 'Rangement fermé'   },
@@ -121,7 +119,7 @@
         const isLast = rem < 60 || (rem >= 60 && rem % 60 !== 0 && rem - 60 < 15);
         const rawW = isLast ? rem : 60;
         const w = Math.min(rawW, 90);
-        cabs.push({ id: id++, x, w, lowerType: 'rangement', upperMode: 'upper', upperType: 'rangement', hoodW: 60 });
+        cabs.push({ id: id++, x, w, lowerType: 'rangement', upperMode: 'upper', upperType: 'rangement', hoodW: 60, hasPlaque: false });
         x += w;
       }
       return cabs;
@@ -182,7 +180,6 @@
         evier:       { 45:150, 60:180, 90:220 },
         lv:          { 45:90,  60:90  },
         four:        { 60:130 },
-        rang_plaque: { 60:270, 90:330 },
       },
       upper: {
         rangement: { 45:160, 60:195, 90:240 },
@@ -324,7 +321,7 @@
             fill={isInvalid ? '#fff0ee' : selected ? '#eef3ff' : 'white'}
             stroke={isInvalid ? '#cc3333' : selected ? '#1a56cc' : '#333'}
             strokeWidth={selected ? 2 : 1} />
-          {doorStyle==='frame' && !isInvalid && !['rang_plaque','four_plaque','lv','four','evier','rangement'].includes(cab.lowerType) &&
+          {doorStyle==='frame' && !isInvalid && !['four_plaque','lv','four','evier','rangement'].includes(cab.lowerType) &&
             <rect x={x+fi} y={y+fi} width={cw-fi*2} height={h-fi*2} fill="none" stroke="#777" strokeWidth={0.65} />}
           {(cab.lowerType==='rangement' || cab.lowerType===undefined || cab.lowerType==='') && cw <= 60 && (() => {
             const href = "images/rangement_45.svg";
@@ -365,16 +362,11 @@
           })()}
           {cab.lowerType==='four' && (() => {
             const href = "images/four.svg";
-            return (<>
+            return (
               <image href={href} x={x} y={y} width={cw} height={h}
                 preserveAspectRatio="none" />
-              <Casserole cx={cx} ctY={ctY} cw={cw} />
-            </>);
+            );
           })()}
-          {cab.lowerType==='rang_plaque' && (<>
-            <image href={"images/rang_plaque.svg"} x={x} y={y} width={cw} height={h} preserveAspectRatio="none" />
-            <Casserole cx={cx} ctY={ctY} cw={cw} />
-          </>)}
           {cab.lowerType==='four_plaque' && (() => {
             const px=x+4, pw=cw-8, oY=y+6, oH=h-12;
             return (<>
@@ -386,6 +378,7 @@
           })()}
           <text x={cx} y={y+h-4} textAnchor="middle" fontSize={6} fill="#999" fontFamily="Courier New, monospace">{cw}cm</text>
           <rect x={x} y={ctY} width={cw} height={C.COUNTER_H} fill="#222" stroke="#111" strokeWidth={0.4} />
+          {cab.hasPlaque && <Casserole cx={cx} ctY={ctY} cw={cw} />}
         </g>
       );
     };
@@ -549,7 +542,7 @@
     function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price }) {
       const colLabels = { A:'Sans colonne', B:'Colonne gauche', C:'Colonne droite', D:'Colonnes gauche + droite', E:'Colonne centre' };
       const typeLabels = { colonne:'Rangement', frigo:'Réfrigérateur', four:'Colonne four', frigo_libre:'Frigo pose libre' };
-      const lowerLabels = { rangement:'Rangement portes', tiroirs:'Tiroirs', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Four encastré', rang_plaque:'Rangement + plaque' };
+      const lowerLabels = { rangement:'Rangement portes', tiroirs:'Tiroirs', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Four encastré' };
       const upperLabels = { rangement:'Rangement fermé', etageres:'Étagères ouvertes', mixte:'Porte + étagères', vide:'Espace vide', micro:'Micro-onde' };
       const doorLabels  = { smooth:'Lisse', frame:'Cadre' };
 
@@ -573,7 +566,7 @@
       lines.push('');
       lines.push('Meubles bas (' + cabs.length + ' modules) :');
       cabs.forEach((c, i) => {
-        const lt = lowerLabels[c.lowerType] || c.lowerType;
+        const lt = (lowerLabels[c.lowerType] || c.lowerType) + (c.hasPlaque ? ' + plaque induction' : '');
         const ut = upperLabels[c.upperType]  || c.upperType;
         const upperInfo = c.upperMode === 'upper' ? ' · Haut: ' + ut : ' · Sans meuble haut';
         lines.push('  ' + (i+1) + '. ' + c.w + 'cm — ' + lt + upperInfo);
@@ -912,13 +905,57 @@
                 return (
                   <Btn key={t.id} active={selLower.lowerType===t.id} disabled={disabled}
                     title={disabled ? reason : ''}
-                    onClick={() => upd(selLower.id,{lowerType:t.id})}
+                    onClick={() => {
+                      const newType = t.id;
+                      const plaqueMaker = newType === 'four' || newType === 'rang_plaque';
+                      const plaqueKiller = newType === 'evier';
+                      const otherHasPlaque = cabs.some(c => c.id !== selLower.id && c.hasPlaque);
+                      setCabs(p => p.map(c => {
+                        if (c.id === selLower.id) {
+                          const newHasPlaque = plaqueKiller ? false
+                            : plaqueMaker && !otherHasPlaque ? true
+                            : c.hasPlaque;
+                          return {...c, lowerType: newType, hasPlaque: newHasPlaque};
+                        }
+                        return c;
+                      }));
+                    }}
                     style={{textAlign:'left',fontSize:'11px'}}>
                     {t.label}{disabled ? ' ⊘' : ''}
                   </Btn>
                 );
               })}
             </div>
+
+            {/* Plaque de cuisson */}
+            {(() => {
+              const isEvier = selLower.lowerType === 'evier';
+              const otherHasPlaque = cabs.some(c => c.id !== selLower.id && c.hasPlaque);
+              const disabled = isEvier || (otherHasPlaque && !selLower.hasPlaque);
+              const reason = isEvier ? 'Non disponible sur évier'
+                           : (otherHasPlaque && !selLower.hasPlaque) ? 'Plaque déjà placée' : '';
+              return (
+                <div style={{marginTop:'10px', paddingTop:'10px', borderTop:'1px solid #eee'}}>
+                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>PLAQUE DE CUISSON</div>
+                  <Btn
+                    active={!!selLower.hasPlaque}
+                    disabled={disabled}
+                    title={disabled ? reason : ''}
+                    style={{width:'100%', textAlign:'center', fontSize:'11px'}}
+                    onClick={() => {
+                      const newVal = !selLower.hasPlaque;
+                      setCabs(p => p.map(c =>
+                        newVal
+                          ? {...c, hasPlaque: c.id === selLower.id}
+                          : c.id === selLower.id ? {...c, hasPlaque: false} : c
+                      ));
+                    }}>
+                    🔥 {selLower.hasPlaque ? 'Plaque présente ✓' : 'Ajouter une plaque'}{disabled && !selLower.hasPlaque ? ' ⊘' : ''}
+                  </Btn>
+                  {disabled && <div style={{fontSize:'10px',color:'#bbb',marginTop:'4px'}}>{reason}</div>}
+                </div>
+              );
+            })()}
 
             {/* Conversion en colonne */}
             {(() => {
