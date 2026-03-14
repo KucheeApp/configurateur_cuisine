@@ -869,55 +869,74 @@
 
     // ====== RÉSUMÉ CONFIGURATION ======
     function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol }) {
-      const colLabels = { A:'Sans colonne', B:'Colonne gauche', C:'Colonne droite', D:'Colonnes gauche + droite', E:'Colonne centre' };
+      const colLabels  = { none:'Aucune', A:'Gauche + Droite', B:'2 à droite', C:'2 à gauche', D:'Gauche', E:'Droite' };
       const typeLabels = { colonne:'Rangement', frigo:'Réfrigérateur', four:'Colonne four', frigo_libre:'Frigo pose libre' };
       const lowerLabels = { rangement:'Rangement portes', tiroirs:'Tiroirs', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Four encastré', ll:'Lave-linge' };
       const upperLabels = { rangement:'Rangement fermé', vide:'Espace vide', micro:'Micro-onde' };
       const doorLabels  = { smooth:'Lisse', frame:'Cadre' };
+      const finLabel = (f) => f.name + (f.category==='bois' ? ' — Bois' : f.category==='laque' ? ' — Laque' : ' — Mélamine');
 
-      const lines = [];
-      lines.push('━━ RÉCAPITULATIF CUISINE ━━');
-      lines.push('Longueur du mur : ' + wallLen + ' cm (' + (wallLen/100).toFixed(2) + ' m)');
-      lines.push('Configuration colonnes : ' + (colLabels[colCfg] || colCfg));
+      const L = [];
+      L.push('╔══════════════════════════════╗');
+      L.push('   VOTRE PROJET CUISINE KUCHEE  ');
+      L.push('╚══════════════════════════════╝');
+      L.push('');
 
-      const fixedColTypes = Object.values(colTypes).filter(Boolean);
-      if (fixedColTypes.length)
-        lines.push('Colonnes fixes : ' + fixedColTypes.map(t => typeLabels[t]||t).join(', '));
-
+      // ── Implantation ──
+      L.push('▌ IMPLANTATION');
+      L.push('  Longueur du mur  : ' + wallLen + ' cm');
+      L.push('  Colonnes         : ' + (colLabels[colCfg] || colCfg));
+      if (colCfg !== 'none') {
+        const fixedColTypes = Object.values(colTypes).filter(Boolean);
+        if (fixedColTypes.length)
+          L.push('  Types colonnes    : ' + fixedColTypes.map((t,i) => (i===0?'Gauche':'Droite') + ' → ' + (typeLabels[t]||t)).join('  ·  '));
+      }
       if (extraCols.length)
-        lines.push('Colonnes ajoutées : ' + extraCols.map(ec => (typeLabels[ec.colType]||ec.colType) + ' ' + ec.w + 'cm').join(', '));
-
-      lines.push('Style de porte : ' + (doorLabels[doorStyle] || doorStyle));
-      lines.push('Finition meubles bas  : ' + finishLower.name + (finishLower.category==='bois' ? ' (bois)' : finishLower.category==='laque' ? ' (laque)' : ' (mélamine)'));
-      lines.push('Finition meubles hauts : ' + finishUpper.name + (finishUpper.category==='bois' ? ' (bois)' : finishUpper.category==='laque' ? ' (laque)' : ' (mélamine)'));
-      lines.push('Finition colonnes     : ' + finishCol.name + (finishCol.category==='bois' ? ' (bois)' : finishCol.category==='laque' ? ' (laque)' : ' (mélamine)'));
-
+        L.push('  Col. ajoutées     : ' + extraCols.map(ec => (typeLabels[ec.colType]||ec.colType) + ' ' + ec.w + 'cm').join(', '));
       if (wins.length)
-        lines.push('Fenêtres : ' + wins.map(w => w.w + 'cm à x=' + w.pos + 'cm').join(', '));
+        L.push('  Fenêtres          : ' + wins.map(w => w.w + 'cm (pos. ' + w.pos + 'cm)').join(', '));
+      L.push('  Style de porte    : ' + (doorLabels[doorStyle] || doorStyle));
+      L.push('');
 
-      lines.push('');
-      lines.push('Meubles bas (' + cabs.length + ' modules) :');
+      // ── Finitions ──
+      L.push('▌ FINITIONS FAÇADES');
+      L.push('  Meubles bas       : ' + finLabel(finishLower));
+      L.push('  Meubles hauts     : ' + finLabel(finishUpper));
+      L.push('  Colonnes          : ' + finLabel(finishCol));
+      L.push('');
+
+      // ── Modules ──
+      L.push('▌ MODULES (' + cabs.length + ' meubles bas)');
       cabs.forEach((c, i) => {
         const lt = (lowerLabels[c.lowerType] || c.lowerType) + (c.hasPlaque ? ' + plaque induction' : '');
-        const ut = upperLabels[c.upperType]  || c.upperType;
-        const upperInfo = c.upperMode === 'upper' ? ' · Haut: ' + ut : ' · Sans meuble haut';
-        lines.push('  ' + (i+1) + '. ' + c.w + 'cm — ' + lt + upperInfo);
+        const ut = c.upperMode === 'upper' ? (upperLabels[c.upperType] || c.upperType) : c.upperMode === 'hood' ? 'Hotte' : 'Sans meuble haut';
+        L.push('  ' + (i+1) + '.  ' + c.w + ' cm  —  Bas: ' + lt + '  |  Haut: ' + ut);
       });
+      L.push('');
 
+      // ── Budget ──
       if (price) {
-        lines.push('');
-        lines.push('━━ BUDGET ESTIMATIF (HT) ━━');
-        lines.push('Meubles bas          : ' + price.lower.toLocaleString('fr-FR') + ' €');
-        lines.push('Meubles hauts        : ' + price.upper.toLocaleString('fr-FR') + ' €');
+        L.push('▌ BUDGET ESTIMATIF HT');
+        L.push('  Meubles bas       : ' + price.lower.toLocaleString('fr-FR') + ' €');
+        L.push('  Meubles hauts     : ' + price.upper.toLocaleString('fr-FR') + ' €');
         if (price.cols > 0)
-          lines.push('Colonnes             : ' + price.cols.toLocaleString('fr-FR') + ' €');
-        lines.push('Plan de travail      : ' + price.worktopLow.toLocaleString('fr-FR') + ' – ' + price.worktopHigh.toLocaleString('fr-FR') + ' €');
-        lines.push('──────────────────────────────');
-        lines.push('TOTAL ESTIMÉ         : ' + price.totalLow.toLocaleString('fr-FR') + ' – ' + price.totalHigh.toLocaleString('fr-FR') + ' €');
-        lines.push('(fourniture + pose · hors électroménager · hors TVA)');
+          L.push('  Colonnes          : ' + price.cols.toLocaleString('fr-FR') + ' €');
+        L.push('  Plan de travail');
+        L.push('    · Stratifié      : ' + price.worktopLow.toLocaleString('fr-FR') + ' €');
+        L.push('    · Quartz         : ' + price.worktopHigh.toLocaleString('fr-FR') + ' €');
+        L.push('  ──────────────────────────');
+        L.push('  TOTAL (stratifié) : ' + price.totalLow.toLocaleString('fr-FR') + ' €');
+        L.push('  TOTAL (quartz)    : ' + price.totalHigh.toLocaleString('fr-FR') + ' €');
+        L.push('');
+        L.push('  * Fourniture + pose · hors TVA');
+        L.push('  * Électroménager non inclus');
+        L.push('  * Tarif indicatif, devis précis sur mesure');
       }
 
-      return lines.join('\n');
+      L.push('');
+      L.push('Notre équipe vous contactera sous 48h.');
+
+      return L.join('\r\n');
     }
 
     // ====== MODAL LEAD ======
@@ -968,15 +987,7 @@
         }
       };
 
-      const Field = ({ label, val, setter, type='text', placeholder='' }) => (
-        <div style={{marginBottom:'12px'}}>
-          <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{label}</div>
-          <input type={type} value={val} onChange={e=>setter(e.target.value)} placeholder={placeholder}
-            style={{width:'100%',padding:'8px 10px',border:'1px solid #ccc',fontFamily:'Courier New,monospace',fontSize:'12px',background:'#fafafa',outline:'none',boxSizing:'border-box'}}
-            onFocus={e=>e.target.style.borderColor='#333'} onBlur={e=>e.target.style.borderColor='#ccc'}
-          />
-        </div>
-      );
+      const inputStyle = {width:'100%',padding:'8px 10px',border:'1px solid #ccc',fontFamily:'Courier New,monospace',fontSize:'12px',background:'#fafafa',outline:'none',boxSizing:'border-box'};
 
       return (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}} onClick={onClose}>
@@ -993,15 +1004,25 @@
               <>
                 <div style={{fontSize:'9px',letterSpacing:'3px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Recevoir mon projet</div>
                 <div style={{fontSize:'18px',fontWeight:'bold',letterSpacing:'-0.5px',marginBottom:'20px',borderBottom:'2px solid #222',paddingBottom:'12px'}}>Devis par e-mail</div>
-                <Field label="Nom & Prénom *" val={nom} setter={setNom} placeholder="Ex : Marie Dupont" />
-                <Field label="Adresse e-mail *" val={email} setter={setEmail} type="email" placeholder="votre@email.com" />
-                <Field label="Téléphone" val={tel} setter={setTel} type="tel" placeholder="06 xx xx xx xx" />
+
+                <div style={{marginBottom:'12px'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Nom &amp; Prénom *</div>
+                  <input type="text" value={nom} onChange={e=>setNom(e.target.value)} placeholder="Ex : Marie Dupont" autoFocus style={inputStyle}/>
+                </div>
+                <div style={{marginBottom:'12px'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Adresse e-mail *</div>
+                  <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.com" style={inputStyle}/>
+                </div>
+                <div style={{marginBottom:'12px'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Téléphone</div>
+                  <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder="06 xx xx xx xx" style={inputStyle}/>
+                </div>
                 <div style={{marginBottom:'16px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Message (optionnel)</div>
                   <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Précisez votre projet, délais, budget..."
-                    rows={3} style={{width:'100%',padding:'8px 10px',border:'1px solid #ccc',fontFamily:'Courier New,monospace',fontSize:'12px',background:'#fafafa',resize:'vertical',outline:'none',boxSizing:'border-box'}}
-                    onFocus={e=>e.target.style.borderColor='#333'} onBlur={e=>e.target.style.borderColor='#ccc'}/>
+                    rows={3} style={{...inputStyle,resize:'vertical'}}/>
                 </div>
+
                 <div style={{fontSize:'9px',color:'#aaa',marginBottom:'16px',lineHeight:'1.6'}}>
                   Le récapitulatif de votre configuration sera joint à l'e-mail.
                 </div>
