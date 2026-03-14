@@ -921,7 +921,7 @@
     }
 
     // ====== MODAL LEAD ======
-    function LeadModal({ onClose, quoteSummary }) {
+    function LeadModal({ onClose, quoteSummary, svgRef }) {
       const [nom,    setNom]    = React.useState('');
       const [email,  setEmail]  = React.useState('');
       const [tel,    setTel]    = React.useState('');
@@ -934,27 +934,36 @@
         if (!isValid) return;
         setStatus('sending');
         try {
-          emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
-          const commonParams = {
-            client_name:   nom.trim(),
-            client_email:  email.trim(),
-            client_tel:    tel.trim() || '—',
-            client_msg:    msg.trim() || '—',
-            quote_summary: quoteSummary,
-          };
-          await emailjs.send(
-            EMAILJS_CONFIG.SERVICE_ID,
-            EMAILJS_CONFIG.TEMPLATE_CLIENT,
-            { ...commonParams, to_email: email.trim(), to_name: nom.trim() }
-          );
-          await emailjs.send(
-            EMAILJS_CONFIG.SERVICE_ID,
-            EMAILJS_CONFIG.TEMPLATE_NOTIF,
-            { ...commonParams, to_email: EMAILJS_CONFIG.VOTRE_EMAIL, to_name: 'KUCHEE' }
-          );
-          setStatus('success');
+          // Capture PNG du plan SVG
+          let pngB64 = '';
+          if (svgRef && svgRef.current && window.htmlToImage) {
+            try {
+              const dataUrl = await htmlToImage.toPng(svgRef.current, { backgroundColor: '#ffffff' });
+              pngB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+            } catch(e) { console.warn('PNG capture failed', e); }
+          }
+
+          const res = await fetch('https://kuchee.com/send.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nom:     nom.trim(),
+              email:   email.trim(),
+              tel:     tel.trim() || '—',
+              message: msg.trim() || '—',
+              recap:   quoteSummary,
+              png:     pngB64,
+            })
+          });
+          const json = await res.json();
+          if (json.ok) {
+            setStatus('success');
+          } else {
+            console.error('send.php error:', json.error);
+            setStatus('error');
+          }
         } catch(err) {
-          console.error('EmailJS error:', err);
+          console.error('Fetch error:', err);
           setStatus('error');
         }
       };
@@ -1916,6 +1925,7 @@
             <LeadModal
               onClose={() => setShowLeadModal(false)}
               quoteSummary={quoteSummary}
+              svgRef={svgRef}
             />
           )}
 
