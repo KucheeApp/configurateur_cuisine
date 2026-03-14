@@ -239,7 +239,7 @@
         four:        { 60:361 },
         frigo_libre: { 60:0   },
       },
-      worktop: { low: 140, high: 494 },
+      worktop: { low: 140 },
     };
 
     const priceLookup = (table, w) => {
@@ -282,11 +282,9 @@
       upper = Math.round(upper * cUp);
       cols  = Math.round(cols  * cCol);
       const totalLowerW = cabs.reduce((s, c) => s + c.w, 0) / 100;
-      const worktopLow  = Math.round(totalLowerW * PRICING.worktop.low);
-      const worktopHigh = Math.round(totalLowerW * PRICING.worktop.high);
+      const worktop = Math.round(totalLowerW * PRICING.worktop.low);
       const subtotal = lower + upper + cols;
-      return { lower, upper, cols, worktopLow, worktopHigh,
-               totalLow: subtotal + worktopLow, totalHigh: subtotal + worktopHigh };
+      return { lower, upper, cols, worktop, total: subtotal + worktop };
     };
 
     const fmt = function(n) { return n.toLocaleString('fr-FR') + ' €'; };
@@ -501,7 +499,7 @@
           <defs><clipPath id={clipId}><rect x={x} y={y} width={w} height={h} /></clipPath></defs>
           {/* Corps colonne */}
           <rect x={x} y={y} width={w} height={h}
-            fill={type==='frigo' ? '#eaf2ff' : type==='four' ? '#f2f2f2' : colFill}
+            fill={colFill}
             stroke={selStr} strokeWidth={selW} />
           {/* Plinthe — identique à la plinthe des meubles bas */}
           <rect x={x} y={plinthY} width={w} height={C.PLINTH_H}
@@ -921,12 +919,9 @@
         L.push('  Meubles hauts     : ' + price.upper.toLocaleString('fr-FR') + ' €');
         if (price.cols > 0)
           L.push('  Colonnes          : ' + price.cols.toLocaleString('fr-FR') + ' €');
-        L.push('  Plan de travail');
-        L.push('    · Stratifié      : ' + price.worktopLow.toLocaleString('fr-FR') + ' €');
-        L.push('    · Quartz         : ' + price.worktopHigh.toLocaleString('fr-FR') + ' €');
+        L.push('  Plan de travail   : ' + price.worktop.toLocaleString('fr-FR') + ' €  (stratifié · 140 €/ml)');
         L.push('  ──────────────────────────');
-        L.push('  TOTAL (stratifié) : ' + price.totalLow.toLocaleString('fr-FR') + ' €');
-        L.push('  TOTAL (quartz)    : ' + price.totalHigh.toLocaleString('fr-FR') + ' €');
+        L.push('  TOTAL ESTIMÉ HT   : ' + price.total.toLocaleString('fr-FR') + ' €');
         L.push('');
         L.push('  * Fourniture + pose · hors TVA');
         L.push('  * Électroménager non inclus');
@@ -1721,7 +1716,7 @@
                     ['Meubles bas',    fmt(price.lower),  null],
                     ['Meubles hauts',  fmt(price.upper),  null],
                     price.cols > 0 ? ['Colonnes', fmt(price.cols), null] : null,
-                    ['Plan de travail', fmt(price.worktopLow), fmt(price.worktopHigh)],
+                    ['Plan de travail stratifié', fmt(price.worktop), null],
                   ].filter(Boolean).map(([label, lo, hi]) => (
                     <div key={label} style={{display:'flex',justifyContent:'space-between',fontSize:'10px',marginBottom:'4px',color:'#555'}}>
                       <span>{label}</span>
@@ -1733,7 +1728,7 @@
                   <div style={{borderTop:'1px solid #ddd',marginTop:'8px',paddingTop:'8px',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
                     <span style={{fontSize:'9px',letterSpacing:'1px',color:'#888',textTransform:'uppercase'}}>Total HT</span>
                     <span style={{fontSize:'13px',fontWeight:'bold',color:'#111',letterSpacing:'-0.5px'}}>
-                      {fmt(price.totalLow)} – {fmt(price.totalHigh)}
+                    {fmt(price.total)}
                     </span>
                   </div>
                   <div style={{fontSize:'8.5px',color:'#bbb',marginTop:'5px',lineHeight:'1.5'}}>
