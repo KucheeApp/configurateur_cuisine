@@ -47,6 +47,472 @@
   </script>
   <script type="text/babel">
 
+    // ====== INTERNATIONALISATION ======
+    const LANG = {
+      fr: {
+        // Types meubles bas
+        'lower.rangement':'Rangement 1 porte','lower.bouteille':'Rangement bouteilles',
+        'lower.evier_1p':'Évier 1 porte','lower.rangement_2p':'Rangement 2 portes',
+        'lower.evier_2p':'Évier 2 portes','lower.coulissant_4t':'Coulissant 4 tiroirs',
+        'lower.coulissant_2t1c':'2 tiroirs + coffre','lower.coulissant_2c':'2 coffres coulissants',
+        'lower.four':'Bas four','lower.lv':'Lave-vaisselle','lower.ll':'Lave-linge',
+        'lower.evier':'Sous-évier',
+        // Groupes
+        'group.A':'A · 1 porte','group.B':'B · 2 portes','group.C':'C · 4 coulissants',
+        'group.D':'D · 2T + coffre','group.E':'E · 2 coffres','group.F':'F · Bas four',
+        'group.Équipements':'Équipements','group.Legacy':'Legacy',
+        // Types meubles hauts
+        'upper.rangement':'Rangement fermé','upper.vide':'Espace vide','upper.micro':'Micro-onde',
+        // Types colonnes
+        'col.colonne':'Colonne rangement','col.frigo':'Réfrigérateur',
+        'col.four':'Colonne four','col.frigo_libre':'Frigo pose libre',
+        // Finitions catégories
+        'fin.bois':'BOIS','fin.melamine':'MÉLAMINE','fin.laque':'LAQUE','fin.custom':'SUR MESURE',
+        'fin.cat.bois':'Bois','fin.cat.melamine':'Mélamine','fin.cat.laque':'Laque',
+        // Config colonnes
+        'col.none':'Aucune colonne','col.A':'1 gauche + 1 droite','col.B':'2 colonnes à droite',
+        'col.C':'2 colonnes à gauche','col.D':'1 colonne à gauche','col.E':'1 colonne à droite',
+        'col.noneShort':'Aucune','col.Ashort':'Gauche + Droite','col.Bshort':'2 à droite',
+        'col.Cshort':'2 à gauche','col.Dshort':'Gauche','col.Eshort':'Droite',
+        // Styles portes
+        'door.smooth':'Lisse','door.frame':'Cadre',
+        // Sidebar sections
+        'sec.wallLen':'Longueur du mur','sec.columns':'Colonnes','sec.colType':'Type de colonne',
+        'sec.windows':'Fenêtres','sec.budget':'Budget estimatif','sec.finishes':'Finitions façades',
+        'sec.doorStyle':'Style de porte',
+        // Panels bas/haut
+        'pan.width':'Largeur','pan.type':'Type','pan.upperElem':'Élément haut',
+        'pan.style':'Style','pan.hoodWidth':'Largeur hotte',
+        'pan.cooktop':'Plaque de cuisson','pan.addCooktop':'Ajouter une plaque',
+        'pan.cookTopOn':'Plaque présente ✓','pan.convert':'Conversion',
+        'pan.convertBtn':'➕ Convertir en colonne','pan.clickEdit':'Cliquer un meuble pour l\'éditer',
+        'pan.windowZone':'⚠ Zone fenêtre — aucun élément haut possible',
+        'pan.hoodOnce':'⚠ Une seule hotte possible',
+        'pan.fourDisabled':'⚠ Four bas désactivé',
+        // Boutons éléments hauts
+        'btn.furniture':'Meuble','btn.hood':'Hotte 🔥','btn.none':'Aucun','btn.back':'← Retour',
+        // Extra colonnes
+        'sec.extraCol':'Colonne ajoutée','pan.deleteCol':'🗑 Supprimer la colonne',
+        'pan.storage':'Rangement','pan.oven':'Four',
+        // Fenêtres
+        'win.drag':'↔ Glisser sur le plan','win.position':'Position','win.addBtn':'+ Ajouter fenêtre',
+        // Erreurs/raisons
+        'err.needsWidth':'nécessite {0}cm','err.noColFour':'incompatible avec colonne four',
+        'err.evierDup':'évier déjà présent','err.lvDup':'lave-vaisselle déjà présent',
+        'err.llDup':'lave-linge déjà présent','err.bottleMax':'max {0} rangements bouteilles',
+        'err.noEvier':'Non disponible sur évier','err.minWidth45':'Largeur min. 45 cm pour plaque',
+        'err.plaqueAlready':'Plaque déjà placée','err.notExtreme':'Uniquement pour colonne en bout de linéaire',
+        'err.hoodNeeds60':'Hotte nécessite ≥60cm','err.hoodAlready':'Hotte déjà placée',
+        'err.needs60':'Nécessite 60cm',
+        'err.adjacentCol':'doit être adjacent à une colonne','err.convertWidth':'largeur doit être 30, 45 ou 60cm',
+        // Flash messages
+        'flash.winMinWidth':"Largeur min. d'une fenêtre : 30cm",
+        'flash.winOverflow':'La fenêtre dépasse le mur','flash.winAdded':'Fenêtre ajoutée',
+        'flash.saved':'Design sauvegardé ✓','flash.loaded':'Design chargé ✓',
+        'flash.exportOk':'Export PNG ✓','flash.saveError':'Erreur sauvegarde',
+        'flash.loadError':'Aucun design sauvegardé','flash.exportError':'Erreur export',
+        // Phases / actions
+        'act.validate':'VALIDER L\'IMPLANTATION →','act.modify':'← Modifier',
+        'act.sendQuote':'📧 RECEVOIR MON DEVIS',
+        // Budget panel
+        'bud.lower':'Meubles bas','bud.upper':'Meubles hauts','bud.cols':'Colonnes',
+        'bud.worktop':'Plan de travail stratifié','bud.totalHT':'Total HT',
+        'bud.delivery':'Fourniture + livraison · hors TVA',
+        'bud.elec':'⚡ Budget électroménager non inclus',
+        // Légende
+        'leg.lower':'Meuble bas — clic pour éditer','leg.upper':'Meuble haut — clic pour éditer',
+        'leg.hood':'Hotte 🔥','leg.window':'Fenêtre — glisser ↔','leg.col':'Colonne — clic pour type',
+        'leg.ok':'✓ Calepinage correct',
+        // Header
+        'hdr.title':'LINÉAIRE CUISINE','hdr.subtitle':'GÉNÉRATEUR 2D · VUE EN ÉLÉVATION',
+        // SVG titre
+        'svg.elevation':'ÉLÉVATION MUR','svg.dims':'MB=85 · MH=72 · COL=215cm · ÉCH.1:1',
+        // Modal
+        'modal.surtitle':'Recevoir mon projet','modal.title':'Devis par e-mail',
+        'modal.name':'Nom & Prénom *','modal.namePlaceholder':'Ex : Marie Dupont',
+        'modal.email':'Adresse e-mail *','modal.phone':'Téléphone',
+        'modal.phonePlaceholder':'06 xx xx xx xx','modal.message':'Message (optionnel)',
+        'modal.messagePlaceholder':'Précisez votre projet, délais, budget...',
+        'modal.summary':'Le récapitulatif de votre configuration sera joint à l\'e-mail.',
+        'modal.cancel':'Annuler','modal.send':'ENVOYER MON DEVIS →','modal.sending':'ENVOI EN COURS…',
+        'modal.close':'FERMER','modal.successTitle':'Devis envoyé !',
+        'modal.successMsg':'Vous recevrez votre récapitulatif à',
+        'modal.error':'Erreur d\'envoi. Vérifiez que send.php est bien en ligne sur kuchee.com.',
+        // Devis email
+        'quote.header':'   VOTRE PROJET CUISINE KUCHEE  ',
+        'quote.layout':'▌ IMPLANTATION','quote.wallLen':'  Longueur du mur  : ',
+        'quote.columns':'  Colonnes         : ','quote.colTypes':'  Types colonnes    : ',
+        'quote.colsAdded':'  Col. ajoutées     : ','quote.windows':'  Fenêtres          : ',
+        'quote.doorStyle':'  Style de porte    : ','quote.finishes':'▌ FINITIONS FAÇADES',
+        'quote.lower':'  Meubles bas       : ','quote.upper':'  Meubles hauts     : ',
+        'quote.colsFin':'  Colonnes          : ',
+        'quote.modules':'▌ MODULES','quote.lowerUnits':'meubles bas',
+        'quote.bas':'Bas','quote.haut':'Haut','quote.induction':' + plaque induction',
+        'quote.hood':'Hotte','quote.noUpper':'Sans meuble haut',
+        'quote.budget':'▌ BUDGET ESTIMATIF HT',
+        'quote.worktop':'  Plan de travail   : ','quote.worktopNote':'  (stratifié · 140 €/ml)',
+        'quote.sep':'  ──────────────────────────',
+        'quote.total':'  TOTAL ESTIMÉ HT   : ',
+        'quote.delivery':'  * Fourniture + livraison · hors TVA',
+        'quote.noElec':'  * Électroménager non inclus',
+        'quote.indicative':'  * Tarif indicatif, devis précis sur mesure',
+        'quote.contact':'Notre équipe vous contactera sous 48h.',
+        'quote.left':'Gauche','quote.right':'Droite',
+      },
+      en: {
+        'lower.rangement':'1-door storage','lower.bouteille':'Bottle rack',
+        'lower.evier_1p':'1-door sink unit','lower.rangement_2p':'2-door storage',
+        'lower.evier_2p':'2-door sink unit','lower.coulissant_4t':'4-drawer pull-out',
+        'lower.coulissant_2t1c':'2 drawers + 1 pull-out','lower.coulissant_2c':'2-chest pull-out',
+        'lower.four':'Oven base','lower.lv':'Dishwasher','lower.ll':'Washing machine',
+        'lower.evier':'Under-sink',
+        'group.A':'A · 1 door','group.B':'B · 2 doors','group.C':'C · 4 pull-outs',
+        'group.D':'D · 2T + chest','group.E':'E · 2 chests','group.F':'F · Oven base',
+        'group.Équipements':'Appliances','group.Legacy':'Legacy',
+        'upper.rangement':'Closed storage','upper.vide':'Empty space','upper.micro':'Microwave',
+        'col.colonne':'Storage column','col.frigo':'Refrigerator',
+        'col.four':'Oven column','col.frigo_libre':'Freestanding fridge',
+        'fin.bois':'WOOD','fin.melamine':'MELAMINE','fin.laque':'LACQUER','fin.custom':'CUSTOM',
+        'fin.cat.bois':'Wood','fin.cat.melamine':'Melamine','fin.cat.laque':'Lacquer',
+        'col.none':'No columns','col.A':'1 left + 1 right','col.B':'2 on right',
+        'col.C':'2 on left','col.D':'1 on left','col.E':'1 on right',
+        'col.noneShort':'None','col.Ashort':'Left + Right','col.Bshort':'2 right',
+        'col.Cshort':'2 left','col.Dshort':'Left','col.Eshort':'Right',
+        'door.smooth':'Flat','door.frame':'Frame',
+        'sec.wallLen':'Wall length','sec.columns':'Columns','sec.colType':'Column type',
+        'sec.windows':'Windows','sec.budget':'Estimated budget','sec.finishes':'Door finishes',
+        'sec.doorStyle':'Door style',
+        'pan.width':'Width','pan.type':'Type','pan.upperElem':'Upper element',
+        'pan.style':'Style','pan.hoodWidth':'Hood width',
+        'pan.cooktop':'Cooktop','pan.addCooktop':'Add cooktop',
+        'pan.cookTopOn':'Cooktop added ✓','pan.convert':'Convert',
+        'pan.convertBtn':'➕ Convert to column','pan.clickEdit':'Click a unit to edit',
+        'pan.windowZone':'⚠ Window zone — no upper unit possible',
+        'pan.hoodOnce':'⚠ Only one hood allowed','pan.fourDisabled':'⚠ Oven base disabled',
+        'btn.furniture':'Cabinet','btn.hood':'Hood 🔥','btn.none':'None','btn.back':'← Back',
+        'sec.extraCol':'Added column','pan.deleteCol':'🗑 Remove column',
+        'pan.storage':'Storage','pan.oven':'Oven',
+        'win.drag':'↔ Drag on the plan','win.position':'Position','win.addBtn':'+ Add window',
+        'err.needsWidth':'requires {0}cm','err.noColFour':'incompatible with oven column',
+        'err.evierDup':'sink already placed','err.lvDup':'dishwasher already placed',
+        'err.llDup':'washing machine already placed','err.bottleMax':'max {0} bottle racks',
+        'err.noEvier':'Not available on sink','err.minWidth45':'Min. width 45 cm for cooktop',
+        'err.plaqueAlready':'Cooktop already placed','err.notExtreme':'Only for end columns',
+        'err.hoodNeeds60':'Hood requires ≥60cm','err.hoodAlready':'Hood already placed',
+        'err.needs60':'Requires 60cm',
+        'err.adjacentCol':'must be adjacent to a column','err.convertWidth':'width must be 30, 45 or 60cm',
+        'flash.winMinWidth':'Min. window width: 30cm',
+        'flash.winOverflow':'Window exceeds wall','flash.winAdded':'Window added',
+        'flash.saved':'Design saved ✓','flash.loaded':'Design loaded ✓',
+        'flash.exportOk':'PNG export ✓','flash.saveError':'Save error',
+        'flash.loadError':'No saved design','flash.exportError':'Export error',
+        'act.validate':'CONFIRM LAYOUT →','act.modify':'← Edit layout',
+        'act.sendQuote':'📧 RECEIVE MY QUOTE',
+        'bud.lower':'Base units','bud.upper':'Wall units','bud.cols':'Columns',
+        'bud.worktop':'Laminate worktop','bud.totalHT':'Total excl. VAT',
+        'bud.delivery':'Supply + delivery · excl. VAT',
+        'bud.elec':'⚡ Appliance budget not included',
+        'leg.lower':'Base unit — click to edit','leg.upper':'Wall unit — click to edit',
+        'leg.hood':'Hood 🔥','leg.window':'Window — drag ↔','leg.col':'Column — click for type',
+        'leg.ok':'✓ Layout correct',
+        'hdr.title':'KITCHEN LAYOUT','hdr.subtitle':'2D GENERATOR · ELEVATION VIEW',
+        'svg.elevation':'WALL ELEVATION','svg.dims':'BC=85 · WC=72 · COL=215cm · SC.1:1',
+        'modal.surtitle':'Receive my project','modal.title':'Quote by email',
+        'modal.name':'Full name *','modal.namePlaceholder':'E.g. John Smith',
+        'modal.email':'Email address *','modal.phone':'Phone',
+        'modal.phonePlaceholder':'+44 7xxx xxxxxx','modal.message':'Message (optional)',
+        'modal.messagePlaceholder':'Tell us about your project, timeline, budget...',
+        'modal.summary':'Your configuration summary will be attached to the email.',
+        'modal.cancel':'Cancel','modal.send':'SEND MY QUOTE →','modal.sending':'SENDING…',
+        'modal.close':'CLOSE','modal.successTitle':'Quote sent!',
+        'modal.successMsg':'You will receive your summary at',
+        'modal.error':'Send error. Please check that send.php is online at kuchee.com.',
+        'quote.header':'   YOUR KUCHEE KITCHEN PROJECT  ',
+        'quote.layout':'▌ LAYOUT','quote.wallLen':'  Wall length      : ',
+        'quote.columns':'  Columns          : ','quote.colTypes':'  Column types     : ',
+        'quote.colsAdded':'  Added cols        : ','quote.windows':'  Windows          : ',
+        'quote.doorStyle':'  Door style        : ','quote.finishes':'▌ DOOR FINISHES',
+        'quote.lower':'  Base units        : ','quote.upper':'  Wall units        : ',
+        'quote.colsFin':'  Columns           : ',
+        'quote.modules':'▌ MODULES','quote.lowerUnits':'base units',
+        'quote.bas':'Base','quote.haut':'Upper','quote.induction':' + induction hob',
+        'quote.hood':'Hood','quote.noUpper':'No wall unit',
+        'quote.budget':'▌ ESTIMATED BUDGET EXCL. VAT',
+        'quote.worktop':'  Worktop           : ','quote.worktopNote':'  (laminate · 140 €/ml)',
+        'quote.sep':'  ──────────────────────────',
+        'quote.total':'  ESTIMATED TOTAL   : ',
+        'quote.delivery':'  * Supply + delivery · excl. VAT',
+        'quote.noElec':'  * Appliances not included',
+        'quote.indicative':'  * Indicative price, precise quote on request',
+        'quote.contact':'Our team will contact you within 48h.',
+        'quote.left':'Left','quote.right':'Right',
+      },
+      it: {
+        'lower.rangement':'Anta singola','lower.bouteille':'Portabottiglie',
+        'lower.evier_1p':'Lavello 1 anta','lower.rangement_2p':'2 ante',
+        'lower.evier_2p':'Lavello 2 ante','lower.coulissant_4t':'4 cassetti estraibili',
+        'lower.coulissant_2t1c':'2 cassetti + 1 grande','lower.coulissant_2c':'2 cassetti grandi',
+        'lower.four':'Base forno','lower.lv':'Lavastoviglie','lower.ll':'Lavatrice',
+        'lower.evier':'Sotto lavello',
+        'group.A':'A · 1 anta','group.B':'B · 2 ante','group.C':'C · 4 estraibili',
+        'group.D':'D · 2C + grande','group.E':'E · 2 grandi','group.F':'F · Base forno',
+        'group.Équipements':'Elettrodomestici','group.Legacy':'Legacy',
+        'upper.rangement':'Pensile chiuso','upper.vide':'Spazio libero','upper.micro':'Microonde',
+        'col.colonne':'Colonna contenitore','col.frigo':'Frigorifero',
+        'col.four':'Colonna forno','col.frigo_libre':'Frigorifero libera installazione',
+        'fin.bois':'LEGNO','fin.melamine':'MELAMINICO','fin.laque':'LACCATO','fin.custom':'SU MISURA',
+        'fin.cat.bois':'Legno','fin.cat.melamine':'Melaminico','fin.cat.laque':'Laccato',
+        'col.none':'Nessuna colonna','col.A':'1 sinistra + 1 destra','col.B':'2 a destra',
+        'col.C':'2 a sinistra','col.D':'1 a sinistra','col.E':'1 a destra',
+        'col.noneShort':'Nessuna','col.Ashort':'Sin. + Des.','col.Bshort':'2 destra',
+        'col.Cshort':'2 sinistra','col.Dshort':'Sinistra','col.Eshort':'Destra',
+        'door.smooth':'Liscio','door.frame':'Telaio',
+        'sec.wallLen':'Lunghezza parete','sec.columns':'Colonne','sec.colType':'Tipo colonna',
+        'sec.windows':'Finestre','sec.budget':'Budget stimato','sec.finishes':'Finiture ante',
+        'sec.doorStyle':'Stile anta',
+        'pan.width':'Larghezza','pan.type':'Tipo','pan.upperElem':'Elemento superiore',
+        'pan.style':'Stile','pan.hoodWidth':'Larghezza cappa',
+        'pan.cooktop':'Piano cottura','pan.addCooktop':'Aggiungi piano cottura',
+        'pan.cookTopOn':'Piano presente ✓','pan.convert':'Conversione',
+        'pan.convertBtn':'➕ Converti in colonna','pan.clickEdit':'Clicca un mobile per modificarlo',
+        'pan.windowZone':'⚠ Zona finestra — nessun elemento superiore',
+        'pan.hoodOnce':'⚠ Una sola cappa possibile','pan.fourDisabled':'⚠ Base forno disabilitata',
+        'btn.furniture':'Mobile','btn.hood':'Cappa 🔥','btn.none':'Nessuno','btn.back':'← Indietro',
+        'sec.extraCol':'Colonna aggiunta','pan.deleteCol':'🗑 Elimina colonna',
+        'pan.storage':'Contenitore','pan.oven':'Forno',
+        'win.drag':'↔ Trascina sul piano','win.position':'Posizione','win.addBtn':'+ Aggiungi finestra',
+        'err.needsWidth':'richiede {0}cm','err.noColFour':'incompatibile con colonna forno',
+        'err.evierDup':'lavello già presente','err.lvDup':'lavastoviglie già presente',
+        'err.llDup':'lavatrice già presente','err.bottleMax':'max {0} portabottiglie',
+        'err.noEvier':'Non disponibile su lavello','err.minWidth45':'Larghezza min. 45 cm per piano',
+        'err.plaqueAlready':'Piano già posizionato','err.notExtreme':'Solo per colonne di estremità',
+        'err.hoodNeeds60':'Cappa richiede ≥60cm','err.hoodAlready':'Cappa già presente',
+        'err.needs60':'Richiede 60cm',
+        'err.adjacentCol':'deve essere adiacente a una colonna','err.convertWidth':'larghezza deve essere 30, 45 o 60cm',
+        'flash.winMinWidth':'Larghezza minima finestra: 30cm',
+        'flash.winOverflow':'La finestra supera il muro','flash.winAdded':'Finestra aggiunta',
+        'flash.saved':'Design salvato ✓','flash.loaded':'Design caricato ✓',
+        'flash.exportOk':'Esportazione PNG ✓','flash.saveError':'Errore salvataggio',
+        'flash.loadError':'Nessun design salvato','flash.exportError':'Errore esportazione',
+        'act.validate':'CONFERMA LAYOUT →','act.modify':'← Modifica',
+        'act.sendQuote':'📧 RICEVI IL MIO PREVENTIVO',
+        'bud.lower':'Basi','bud.upper':'Pensili','bud.cols':'Colonne',
+        'bud.worktop':'Piano laminato','bud.totalHT':'Totale IVA escl.',
+        'bud.delivery':'Fornitura + consegna · IVA esclusa',
+        'bud.elec':'⚡ Elettrodomestici non inclusi',
+        'leg.lower':'Base — clicca per modificare','leg.upper':'Pensile — clicca per modificare',
+        'leg.hood':'Cappa 🔥','leg.window':'Finestra — trascina ↔','leg.col':'Colonna — clicca per tipo',
+        'leg.ok':'✓ Layout corretto',
+        'hdr.title':'CUCINA LINEARE','hdr.subtitle':'GENERATORE 2D · VISTA IN ELEVAZIONE',
+        'svg.elevation':'ELEVAZIONE PARETE','svg.dims':'MB=85 · MA=72 · COL=215cm · SC.1:1',
+        'modal.surtitle':'Ricevi il mio progetto','modal.title':'Preventivo via email',
+        'modal.name':'Nome e Cognome *','modal.namePlaceholder':'Es. Mario Rossi',
+        'modal.email':'Indirizzo email *','modal.phone':'Telefono',
+        'modal.phonePlaceholder':'+39 3xx xxx xxxx','modal.message':'Messaggio (opzionale)',
+        'modal.messagePlaceholder':'Descrivi il tuo progetto, tempi, budget...',
+        'modal.summary':'Il riepilogo della tua configurazione sarà allegato all\'email.',
+        'modal.cancel':'Annulla','modal.send':'INVIA IL MIO PREVENTIVO →','modal.sending':'INVIO IN CORSO…',
+        'modal.close':'CHIUDI','modal.successTitle':'Preventivo inviato!',
+        'modal.successMsg':'Riceverai il tuo riepilogo a',
+        'modal.error':'Errore invio. Verifica che send.php sia attivo su kuchee.com.',
+        'quote.header':'   IL TUO PROGETTO CUCINA KUCHEE  ',
+        'quote.layout':'▌ LAYOUT','quote.wallLen':'  Lunghezza parete : ',
+        'quote.columns':'  Colonne          : ','quote.colTypes':'  Tipi colonne     : ',
+        'quote.colsAdded':'  Col. aggiunte    : ','quote.windows':'  Finestre         : ',
+        'quote.doorStyle':'  Stile anta       : ','quote.finishes':'▌ FINITURE ANTE',
+        'quote.lower':'  Basi              : ','quote.upper':'  Pensili           : ',
+        'quote.colsFin':'  Colonne           : ',
+        'quote.modules':'▌ MODULI','quote.lowerUnits':'basi',
+        'quote.bas':'Base','quote.haut':'Pensile','quote.induction':' + piano induzione',
+        'quote.hood':'Cappa','quote.noUpper':'Senza pensile',
+        'quote.budget':'▌ BUDGET STIMATO IVA ESCLUSA',
+        'quote.worktop':'  Piano lavoro      : ','quote.worktopNote':'  (laminato · 140 €/ml)',
+        'quote.sep':'  ──────────────────────────',
+        'quote.total':'  TOTALE STIMATO    : ',
+        'quote.delivery':'  * Fornitura + consegna · IVA esclusa',
+        'quote.noElec':'  * Elettrodomestici non inclusi',
+        'quote.indicative':'  * Prezzo indicativo, preventivo preciso su richiesta',
+        'quote.contact':'Il nostro team ti contatterà entro 48h.',
+        'quote.left':'Sinistra','quote.right':'Destra',
+      },
+      es: {
+        'lower.rangement':'1 puerta','lower.bouteille':'Botellero',
+        'lower.evier_1p':'Fregadero 1 puerta','lower.rangement_2p':'2 puertas',
+        'lower.evier_2p':'Fregadero 2 puertas','lower.coulissant_4t':'4 cajones extraíbles',
+        'lower.coulissant_2t1c':'2 cajones + 1 grande','lower.coulissant_2c':'2 cajones grandes',
+        'lower.four':'Bajo horno','lower.lv':'Lavavajillas','lower.ll':'Lavadora',
+        'lower.evier':'Bajo fregadero',
+        'group.A':'A · 1 puerta','group.B':'B · 2 puertas','group.C':'C · 4 extraíbles',
+        'group.D':'D · 2C + grande','group.E':'E · 2 grandes','group.F':'F · Bajo horno',
+        'group.Équipements':'Electrodomésticos','group.Legacy':'Legacy',
+        'upper.rangement':'Armario cerrado','upper.vide':'Espacio libre','upper.micro':'Microondas',
+        'col.colonne':'Columna armario','col.frigo':'Frigorífico',
+        'col.four':'Columna horno','col.frigo_libre':'Frigorífico libre',
+        'fin.bois':'MADERA','fin.melamine':'MELAMINA','fin.laque':'LACADO','fin.custom':'A MEDIDA',
+        'fin.cat.bois':'Madera','fin.cat.melamine':'Melamina','fin.cat.laque':'Lacado',
+        'col.none':'Sin columnas','col.A':'1 izq. + 1 der.','col.B':'2 a la derecha',
+        'col.C':'2 a la izquierda','col.D':'1 a la izquierda','col.E':'1 a la derecha',
+        'col.noneShort':'Ninguna','col.Ashort':'Izq. + Der.','col.Bshort':'2 derecha',
+        'col.Cshort':'2 izquierda','col.Dshort':'Izquierda','col.Eshort':'Derecha',
+        'door.smooth':'Liso','door.frame':'Marco',
+        'sec.wallLen':'Longitud de pared','sec.columns':'Columnas','sec.colType':'Tipo de columna',
+        'sec.windows':'Ventanas','sec.budget':'Presupuesto estimado','sec.finishes':'Acabados puertas',
+        'sec.doorStyle':'Estilo de puerta',
+        'pan.width':'Anchura','pan.type':'Tipo','pan.upperElem':'Elemento superior',
+        'pan.style':'Estilo','pan.hoodWidth':'Anchura campana',
+        'pan.cooktop':'Placa de cocción','pan.addCooktop':'Añadir placa',
+        'pan.cookTopOn':'Placa añadida ✓','pan.convert':'Conversión',
+        'pan.convertBtn':'➕ Convertir en columna','pan.clickEdit':'Clic en un mueble para editar',
+        'pan.windowZone':'⚠ Zona ventana — sin elemento superior',
+        'pan.hoodOnce':'⚠ Solo una campana posible','pan.fourDisabled':'⚠ Bajo horno desactivado',
+        'btn.furniture':'Mueble','btn.hood':'Campana 🔥','btn.none':'Ninguno','btn.back':'← Volver',
+        'sec.extraCol':'Columna añadida','pan.deleteCol':'🗑 Eliminar columna',
+        'pan.storage':'Almacenaje','pan.oven':'Horno',
+        'win.drag':'↔ Arrastrar en el plano','win.position':'Posición','win.addBtn':'+ Añadir ventana',
+        'err.needsWidth':'requiere {0}cm','err.noColFour':'incompatible con columna horno',
+        'err.evierDup':'fregadero ya colocado','err.lvDup':'lavavajillas ya colocado',
+        'err.llDup':'lavadora ya colocada','err.bottleMax':'máx {0} botelleros',
+        'err.noEvier':'No disponible en fregadero','err.minWidth45':'Anchura mín. 45 cm para placa',
+        'err.plaqueAlready':'Placa ya colocada','err.notExtreme':'Solo para columnas de extremo',
+        'err.hoodNeeds60':'Campana requiere ≥60cm','err.hoodAlready':'Campana ya colocada',
+        'err.needs60':'Requiere 60cm',
+        'err.adjacentCol':'debe estar junto a una columna','err.convertWidth':'anchura debe ser 30, 45 o 60cm',
+        'flash.winMinWidth':'Anchura mínima ventana: 30cm',
+        'flash.winOverflow':'La ventana supera la pared','flash.winAdded':'Ventana añadida',
+        'flash.saved':'Diseño guardado ✓','flash.loaded':'Diseño cargado ✓',
+        'flash.exportOk':'Exportación PNG ✓','flash.saveError':'Error al guardar',
+        'flash.loadError':'Sin diseño guardado','flash.exportError':'Error de exportación',
+        'act.validate':'CONFIRMAR DISTRIBUCIÓN →','act.modify':'← Modificar',
+        'act.sendQuote':'📧 RECIBIR MI PRESUPUESTO',
+        'bud.lower':'Muebles bajos','bud.upper':'Muebles altos','bud.cols':'Columnas',
+        'bud.worktop':'Encimera laminada','bud.totalHT':'Total sin IVA',
+        'bud.delivery':'Suministro + entrega · sin IVA',
+        'bud.elec':'⚡ Electrodomésticos no incluidos',
+        'leg.lower':'Mueble bajo — clic para editar','leg.upper':'Mueble alto — clic para editar',
+        'leg.hood':'Campana 🔥','leg.window':'Ventana — arrastrar ↔','leg.col':'Columna — clic para tipo',
+        'leg.ok':'✓ Distribución correcta',
+        'hdr.title':'COCINA LINEAL','hdr.subtitle':'GENERADOR 2D · VISTA EN ALZADO',
+        'svg.elevation':'ALZADO PARED','svg.dims':'MB=85 · MA=72 · COL=215cm · ESC.1:1',
+        'modal.surtitle':'Recibir mi proyecto','modal.title':'Presupuesto por email',
+        'modal.name':'Nombre y Apellidos *','modal.namePlaceholder':'Ej. Juan García',
+        'modal.email':'Dirección email *','modal.phone':'Teléfono',
+        'modal.phonePlaceholder':'+34 6xx xxx xxx','modal.message':'Mensaje (opcional)',
+        'modal.messagePlaceholder':'Describe tu proyecto, plazos, presupuesto...',
+        'modal.summary':'El resumen de tu configuración se adjuntará al email.',
+        'modal.cancel':'Cancelar','modal.send':'ENVIAR MI PRESUPUESTO →','modal.sending':'ENVIANDO…',
+        'modal.close':'CERRAR','modal.successTitle':'¡Presupuesto enviado!',
+        'modal.successMsg':'Recibirás tu resumen en',
+        'modal.error':'Error de envío. Comprueba que send.php esté activo en kuchee.com.',
+        'quote.header':'   TU PROYECTO COCINA KUCHEE  ',
+        'quote.layout':'▌ DISTRIBUCIÓN','quote.wallLen':'  Long. de pared   : ',
+        'quote.columns':'  Columnas         : ','quote.colTypes':'  Tipos columnas   : ',
+        'quote.colsAdded':'  Col. añadidas    : ','quote.windows':'  Ventanas         : ',
+        'quote.doorStyle':'  Estilo puerta    : ','quote.finishes':'▌ ACABADOS PUERTAS',
+        'quote.lower':'  Muebles bajos     : ','quote.upper':'  Muebles altos     : ',
+        'quote.colsFin':'  Columnas          : ',
+        'quote.modules':'▌ MÓDULOS','quote.lowerUnits':'muebles bajos',
+        'quote.bas':'Bajo','quote.haut':'Alto','quote.induction':' + placa inducción',
+        'quote.hood':'Campana','quote.noUpper':'Sin mueble alto',
+        'quote.budget':'▌ PRESUPUESTO ESTIMADO SIN IVA',
+        'quote.worktop':'  Encimera          : ','quote.worktopNote':'  (laminado · 140 €/ml)',
+        'quote.sep':'  ──────────────────────────',
+        'quote.total':'  TOTAL ESTIMADO    : ',
+        'quote.delivery':'  * Suministro + entrega · sin IVA',
+        'quote.noElec':'  * Electrodomésticos no incluidos',
+        'quote.indicative':'  * Precio orientativo, presupuesto preciso a medida',
+        'quote.contact':'Nuestro equipo le contactará en 48h.',
+        'quote.left':'Izquierda','quote.right':'Derecha',
+      },
+      de: {
+        'lower.rangement':'1 Tür','lower.bouteille':'Flaschenregal',
+        'lower.evier_1p':'Spüle 1 Tür','lower.rangement_2p':'2 Türen',
+        'lower.evier_2p':'Spüle 2 Türen','lower.coulissant_4t':'4 Auszüge',
+        'lower.coulissant_2t1c':'2 Schubladen + 1 Auszug','lower.coulissant_2c':'2 große Auszüge',
+        'lower.four':'Ofenunterschrank','lower.lv':'Geschirrspüler','lower.ll':'Waschmaschine',
+        'lower.evier':'Unter Spüle',
+        'group.A':'A · 1 Tür','group.B':'B · 2 Türen','group.C':'C · 4 Auszüge',
+        'group.D':'D · 2A + Fach','group.E':'E · 2 Fächer','group.F':'F · Ofenunterschrank',
+        'group.Équipements':'Geräte','group.Legacy':'Legacy',
+        'upper.rangement':'Geschlossener Hängeschrank','upper.vide':'Freier Platz','upper.micro':'Mikrowelle',
+        'col.colonne':'Stauraum-Hochschrank','col.frigo':'Kühlschrank',
+        'col.four':'Ofen-Hochschrank','col.frigo_libre':'Standkühlschrank',
+        'fin.bois':'HOLZ','fin.melamine':'MELAMIN','fin.laque':'LACKIERT','fin.custom':'SONDERWUNSCH',
+        'fin.cat.bois':'Holz','fin.cat.melamine':'Melamin','fin.cat.laque':'Lackiert',
+        'col.none':'Keine Hochschränke','col.A':'1 links + 1 rechts','col.B':'2 rechts',
+        'col.C':'2 links','col.D':'1 links','col.E':'1 rechts',
+        'col.noneShort':'Keine','col.Ashort':'Links + Rechts','col.Bshort':'2 rechts',
+        'col.Cshort':'2 links','col.Dshort':'Links','col.Eshort':'Rechts',
+        'door.smooth':'Glatt','door.frame':'Rahmen',
+        'sec.wallLen':'Wandlänge','sec.columns':'Hochschränke','sec.colType':'Hochschranktyp',
+        'sec.windows':'Fenster','sec.budget':'Kostenschätzung','sec.finishes':'Frontfinish',
+        'sec.doorStyle':'Türstil',
+        'pan.width':'Breite','pan.type':'Typ','pan.upperElem':'Oberelement',
+        'pan.style':'Stil','pan.hoodWidth':'Dunstabzugsbreite',
+        'pan.cooktop':'Kochfeld','pan.addCooktop':'Kochfeld hinzufügen',
+        'pan.cookTopOn':'Kochfeld vorhanden ✓','pan.convert':'Umwandlung',
+        'pan.convertBtn':'➕ In Hochschrank umwandeln','pan.clickEdit':'Klicke ein Möbel zum Bearbeiten',
+        'pan.windowZone':'⚠ Fensterzone — kein Oberelement möglich',
+        'pan.hoodOnce':'⚠ Nur eine Dunstabzugshaube möglich','pan.fourDisabled':'⚠ Ofenunterschrank deaktiviert',
+        'btn.furniture':'Schrank','btn.hood':'Haube 🔥','btn.none':'Keiner','btn.back':'← Zurück',
+        'sec.extraCol':'Hinzugefügter Hochschrank','pan.deleteCol':'🗑 Hochschrank entfernen',
+        'pan.storage':'Stauraum','pan.oven':'Ofen',
+        'win.drag':'↔ Auf dem Plan ziehen','win.position':'Position','win.addBtn':'+ Fenster hinzufügen',
+        'err.needsWidth':'benötigt {0}cm','err.noColFour':'inkompatibel mit Ofen-Hochschrank',
+        'err.evierDup':'Spüle bereits vorhanden','err.lvDup':'Geschirrspüler bereits vorhanden',
+        'err.llDup':'Waschmaschine bereits vorhanden','err.bottleMax':'max. {0} Flaschenregale',
+        'err.noEvier':'Nicht bei Spüle verfügbar','err.minWidth45':'Min. Breite 45 cm für Kochfeld',
+        'err.plaqueAlready':'Kochfeld bereits platziert','err.notExtreme':'Nur für Endschränke',
+        'err.hoodNeeds60':'Haube benötigt ≥60cm','err.hoodAlready':'Haube bereits vorhanden',
+        'err.needs60':'Benötigt 60cm',
+        'err.adjacentCol':'muss an einem Hochschrank anliegen','err.convertWidth':'Breite muss 30, 45 oder 60cm sein',
+        'flash.winMinWidth':'Fenster-Mindestbreite: 30cm',
+        'flash.winOverflow':'Fenster überschreitet die Wand','flash.winAdded':'Fenster hinzugefügt',
+        'flash.saved':'Design gespeichert ✓','flash.loaded':'Design geladen ✓',
+        'flash.exportOk':'PNG-Export ✓','flash.saveError':'Speicherfehler',
+        'flash.loadError':'Kein gespeichertes Design','flash.exportError':'Exportfehler',
+        'act.validate':'AUFTEILUNG BESTÄTIGEN →','act.modify':'← Bearbeiten',
+        'act.sendQuote':'📧 ANGEBOT ERHALTEN',
+        'bud.lower':'Unterschränke','bud.upper':'Oberschränke','bud.cols':'Hochschränke',
+        'bud.worktop':'Laminat-Arbeitsplatte','bud.totalHT':'Gesamt ohne MwSt.',
+        'bud.delivery':'Lieferung + Montage · ohne MwSt.',
+        'bud.elec':'⚡ Gerätekosten nicht enthalten',
+        'leg.lower':'Unterschrank — klicken zum Bearbeiten','leg.upper':'Oberschrank — klicken zum Bearbeiten',
+        'leg.hood':'Haube 🔥','leg.window':'Fenster — ziehen ↔','leg.col':'Hochschrank — klicken für Typ',
+        'leg.ok':'✓ Aufteilung korrekt',
+        'hdr.title':'KÜCHENZEILE','hdr.subtitle':'2D-GENERATOR · ANSICHT ELEVATION',
+        'svg.elevation':'WANDANSICHT','svg.dims':'UH=85 · OH=72 · HS=215cm · M.1:1',
+        'modal.surtitle':'Mein Projekt erhalten','modal.title':'Angebot per E-Mail',
+        'modal.name':'Vor- und Nachname *','modal.namePlaceholder':'z.B. Max Mustermann',
+        'modal.email':'E-Mail-Adresse *','modal.phone':'Telefon',
+        'modal.phonePlaceholder':'+49 1xx xxxxxxx','modal.message':'Nachricht (optional)',
+        'modal.messagePlaceholder':'Beschreibe dein Projekt, Zeitplan, Budget...',
+        'modal.summary':'Die Zusammenfassung deiner Konfiguration wird der E-Mail beigefügt.',
+        'modal.cancel':'Abbrechen','modal.send':'ANGEBOT ABSENDEN →','modal.sending':'WIRD GESENDET…',
+        'modal.close':'SCHLIEẞEN','modal.successTitle':'Angebot gesendet!',
+        'modal.successMsg':'Du erhältst deine Zusammenfassung an',
+        'modal.error':'Sendefehler. Prüfe ob send.php auf kuchee.com verfügbar ist.',
+        'quote.header':'   IHR KUCHEE-KÜCHENPROJEKT  ',
+        'quote.layout':'▌ AUFTEILUNG','quote.wallLen':'  Wandlänge        : ',
+        'quote.columns':'  Hochschränke     : ','quote.colTypes':'  Schranktypen     : ',
+        'quote.colsAdded':'  Hin. Schränke    : ','quote.windows':'  Fenster          : ',
+        'quote.doorStyle':'  Türstil          : ','quote.finishes':'▌ FRONTFINISH',
+        'quote.lower':'  Unterschränke    : ','quote.upper':'  Oberschränke     : ',
+        'quote.colsFin':'  Hochschränke     : ',
+        'quote.modules':'▌ MODULE','quote.lowerUnits':'Unterschränke',
+        'quote.bas':'Unter','quote.haut':'Ober','quote.induction':' + Induktionskochfeld',
+        'quote.hood':'Haube','quote.noUpper':'Ohne Oberschrank',
+        'quote.budget':'▌ GESCHÄTZTE KOSTEN OHNE MWST',
+        'quote.worktop':'  Arbeitsplatte    : ','quote.worktopNote':'  (Laminat · 140 €/ml)',
+        'quote.sep':'  ──────────────────────────',
+        'quote.total':'  GESCHÄTZT GESAMT : ',
+        'quote.delivery':'  * Lieferung + Montage · ohne MwSt.',
+        'quote.noElec':'  * Geräte nicht enthalten',
+        'quote.indicative':'  * Richtwert, genaues Angebot auf Anfrage',
+        'quote.contact':'Unser Team kontaktiert Sie innerhalb von 48h.',
+        'quote.left':'Links','quote.right':'Rechts',
+      },
+    };
+
     // ====== EMAILJS CONFIG — à remplir avec vos identifiants emailjs.com ======
     const EMAILJS_CONFIG = {
       PUBLIC_KEY:      'VOTRE_PUBLIC_KEY',      // Account > API Keys
@@ -311,7 +777,7 @@
       return { lower, upper, cols, worktop, total: subtotal + worktop };
     };
 
-    const fmt = function(n) { return n.toLocaleString('fr-FR') + ' €'; };
+    const fmt = function(n, locale) { const localeMap = {fr:'fr-FR',en:'en-GB',it:'it-IT',es:'es-ES',de:'de-DE'}; return n.toLocaleString(localeMap[locale]||'fr-FR') + ' €'; };
 
     // ====== COMPOSANTS SVG ======
 
@@ -979,7 +1445,7 @@
     // ====== UI HELPERS ======
     const Btn = ({ active, onClick, children, style={}, disabled=false, title }) => (
       <button onClick={disabled ? undefined : onClick}
-        title={title ?? (disabled ? 'Non disponible' : undefined)}
+        title={title ?? undefined}
         style={{
           padding:'6px 12px', fontSize:'12px', fontFamily:'Courier New, monospace',
           cursor: disabled ? 'not-allowed' : 'pointer',
@@ -1000,76 +1466,76 @@
     );
 
     // ====== RÉSUMÉ CONFIGURATION ======
-    function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol }) {
-      const colLabels  = { none:'Aucune', A:'Gauche + Droite', B:'2 à droite', C:'2 à gauche', D:'Gauche', E:'Droite' };
-      const typeLabels = { colonne:'Rangement', frigo:'Réfrigérateur', four:'Colonne four', frigo_libre:'Frigo pose libre' };
-      const lowerLabels = { rangement:'Rangement 1 porte', bouteille:'Rangement bouteilles', evier_1p:'Évier 1 porte', rangement_2p:'Rangement 2 portes', evier_2p:'Évier 2 portes', coulissant_4t:'Coulissant 4 tiroirs', coulissant_2t1c:'Coulissant 2 tiroirs + coffre', coulissant_2c:'Coulissant 2 coffres', tiroirs:'Tiroirs 3 niveaux', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Bas four', ll:'Lave-linge' };
-      const upperLabels = { rangement:'Rangement fermé', vide:'Espace vide', micro:'Micro-onde' };
-      const doorLabels  = { smooth:'Lisse', frame:'Cadre' };
-      const finLabel = (f) => f.name + (f.category==='bois' ? ' — Bois' : f.category==='laque' ? ' — Laque' : ' — Mélamine');
+    function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol, T, locale }) {
+      const colLabels  = { none:T('col.noneShort'), A:T('col.Ashort'), B:T('col.Bshort'), C:T('col.Cshort'), D:T('col.Dshort'), E:T('col.Eshort') };
+      const typeLabels = { colonne:T('col.colonne'), frigo:T('col.frigo'), four:T('col.four'), frigo_libre:T('col.frigo_libre') };
+      const lowerLabels = { rangement:T('lower.rangement'), bouteille:T('lower.bouteille'), evier_1p:T('lower.evier_1p'), rangement_2p:T('lower.rangement_2p'), evier_2p:T('lower.evier_2p'), coulissant_4t:T('lower.coulissant_4t'), coulissant_2t1c:T('lower.coulissant_2t1c'), coulissant_2c:T('lower.coulissant_2c'), tiroirs:'Tiroirs', evier:T('lower.evier'), lv:T('lower.lv'), four:T('lower.four'), ll:T('lower.ll') };
+      const upperLabels = { rangement:T('upper.rangement'), vide:T('upper.vide'), micro:T('upper.micro') };
+      const doorLabels  = { smooth:T('door.smooth'), frame:T('door.frame') };
+      const finLabel = (f) => f.name + (f.category==='bois' ? ' — '+T('fin.cat.bois') : f.category==='laque' ? ' — '+T('fin.cat.laque') : ' — '+T('fin.cat.melamine'));
 
       const L = [];
       L.push('╔══════════════════════════════╗');
-      L.push('   VOTRE PROJET CUISINE KUCHEE  ');
+      L.push(T('quote.header'));
       L.push('╚══════════════════════════════╝');
       L.push('');
 
       // ── Implantation ──
-      L.push('▌ IMPLANTATION');
-      L.push('  Longueur du mur  : ' + wallLen + ' cm');
-      L.push('  Colonnes         : ' + (colLabels[colCfg] || colCfg));
+      L.push(T('quote.layout'));
+      L.push(T('quote.wallLen') + wallLen + ' cm');
+      L.push(T('quote.columns') + (colLabels[colCfg] || colCfg));
       if (colCfg !== 'none') {
         const fixedColTypes = Object.values(colTypes).filter(Boolean);
         if (fixedColTypes.length)
-          L.push('  Types colonnes    : ' + fixedColTypes.map((t,i) => (i===0?'Gauche':'Droite') + ' → ' + (typeLabels[t]||t)).join('  ·  '));
+          L.push(T('quote.colTypes') + fixedColTypes.map((t,i) => (i===0?T('quote.left'):T('quote.right')) + ' → ' + (typeLabels[t]||t)).join('  ·  '));
       }
       if (extraCols.length)
-        L.push('  Col. ajoutées     : ' + extraCols.map(ec => (typeLabels[ec.colType]||ec.colType) + ' ' + ec.w + 'cm').join(', '));
+        L.push(T('quote.colsAdded') + extraCols.map(ec => (typeLabels[ec.colType]||ec.colType) + ' ' + ec.w + 'cm').join(', '));
       if (wins.length)
-        L.push('  Fenêtres          : ' + wins.map(w => w.w + 'cm (pos. ' + w.pos + 'cm)').join(', '));
-      L.push('  Style de porte    : ' + (doorLabels[doorStyle] || doorStyle));
+        L.push(T('quote.windows') + wins.map(w => w.w + 'cm (pos. ' + w.pos + 'cm)').join(', '));
+      L.push(T('quote.doorStyle') + (doorLabels[doorStyle] || doorStyle));
       L.push('');
 
       // ── Finitions ──
-      L.push('▌ FINITIONS FAÇADES');
-      L.push('  Meubles bas       : ' + finLabel(finishLower));
-      L.push('  Meubles hauts     : ' + finLabel(finishUpper));
-      L.push('  Colonnes          : ' + finLabel(finishCol));
+      L.push(T('quote.finishes'));
+      L.push(T('quote.lower') + finLabel(finishLower));
+      L.push(T('quote.upper') + finLabel(finishUpper));
+      L.push(T('quote.colsFin') + finLabel(finishCol));
       L.push('');
 
       // ── Modules ──
-      L.push('▌ MODULES (' + cabs.length + ' meubles bas)');
+      L.push(T('quote.modules') + ' (' + cabs.length + ' ' + T('quote.lowerUnits') + ')');
       cabs.forEach((c, i) => {
-        const lt = (lowerLabels[c.lowerType] || c.lowerType) + (c.hasPlaque ? ' + plaque induction' : '');
-        const ut = c.upperMode === 'upper' ? (upperLabels[c.upperType] || c.upperType) : c.upperMode === 'hood' ? 'Hotte' : 'Sans meuble haut';
-        L.push('  ' + (i+1) + '.  ' + c.w + ' cm  —  Bas: ' + lt + '  |  Haut: ' + ut);
+        const lt = (lowerLabels[c.lowerType] || c.lowerType) + (c.hasPlaque ? T('quote.induction') : '');
+        const ut = c.upperMode === 'upper' ? (upperLabels[c.upperType] || c.upperType) : c.upperMode === 'hood' ? T('quote.hood') : T('quote.noUpper');
+        L.push('  ' + (i+1) + '.  ' + c.w + ' cm  —  ' + T('quote.bas') + ': ' + lt + '  |  ' + T('quote.haut') + ': ' + ut);
       });
       L.push('');
 
       // ── Budget ──
       if (price) {
-        L.push('▌ BUDGET ESTIMATIF HT');
-        L.push('  Meubles bas       : ' + price.lower.toLocaleString('fr-FR') + ' €');
-        L.push('  Meubles hauts     : ' + price.upper.toLocaleString('fr-FR') + ' €');
+        L.push(T('quote.budget'));
+        L.push(T('quote.lower') + fmt(price.lower, locale) + ' €'.replace(' €',''));
+        L.push(T('quote.upper') + fmt(price.upper, locale).replace(' €','') + ' €');
         if (price.cols > 0)
-          L.push('  Colonnes          : ' + price.cols.toLocaleString('fr-FR') + ' €');
-        L.push('  Plan de travail   : ' + price.worktop.toLocaleString('fr-FR') + ' €  (stratifié · 140 €/ml)');
-        L.push('  ──────────────────────────');
-        L.push('  TOTAL ESTIMÉ HT   : ' + price.total.toLocaleString('fr-FR') + ' €');
+          L.push(T('quote.colsFin') + fmt(price.cols, locale).replace(' €','') + ' €');
+        L.push(T('quote.worktop') + fmt(price.worktop, locale).replace(' €','') + ' €' + T('quote.worktopNote'));
+        L.push(T('quote.sep'));
+        L.push(T('quote.total') + fmt(price.total, locale).replace(' €','') + ' €');
         L.push('');
-        L.push('  * Fourniture + pose · hors TVA');
-        L.push('  * Électroménager non inclus');
-        L.push('  * Tarif indicatif, devis précis sur mesure');
+        L.push(T('quote.delivery'));
+        L.push(T('quote.noElec'));
+        L.push(T('quote.indicative'));
       }
 
       L.push('');
-      L.push('Notre équipe vous contactera sous 48h.');
+      L.push(T('quote.contact'));
 
       return L.join('\r\n');
     }
 
     // ====== MODAL LEAD ======
-    function LeadModal({ onClose, quoteSummary, svgRef }) {
+    function LeadModal({ onClose, quoteSummary, svgRef, T }) {
       const [nom,    setNom]    = React.useState('');
       const [email,  setEmail]  = React.useState('');
       const [tel,    setTel]    = React.useState('');
@@ -1125,39 +1591,39 @@
             {status === 'success' ? (
               <div style={{textAlign:'center',padding:'20px 0'}}>
                 <div style={{fontSize:'32px',marginBottom:'12px'}}>✅</div>
-                <div style={{fontSize:'14px',letterSpacing:'1px',marginBottom:'8px'}}>Devis envoyé !</div>
-                <div style={{fontSize:'11px',color:'#888',marginBottom:'24px'}}>Vous recevrez votre récapitulatif à <strong>{email}</strong>.</div>
-                <button onClick={onClose} style={{padding:'10px 24px',background:'#222',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'2px'}}>FERMER</button>
+                <div style={{fontSize:'14px',letterSpacing:'1px',marginBottom:'8px'}}>{T('modal.successTitle')}</div>
+                <div style={{fontSize:'11px',color:'#888',marginBottom:'24px'}}>{T('modal.successMsg')} <strong>{email}</strong>.</div>
+                <button onClick={onClose} style={{padding:'10px 24px',background:'#222',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'2px'}}>{T('modal.close')}</button>
               </div>
             ) : (
               <>
-                <div style={{fontSize:'9px',letterSpacing:'3px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Recevoir mon projet</div>
-                <div style={{fontSize:'18px',fontWeight:'bold',letterSpacing:'-0.5px',marginBottom:'20px',borderBottom:'2px solid #222',paddingBottom:'12px'}}>Devis par e-mail</div>
+                <div style={{fontSize:'9px',letterSpacing:'3px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.surtitle')}</div>
+                <div style={{fontSize:'18px',fontWeight:'bold',letterSpacing:'-0.5px',marginBottom:'20px',borderBottom:'2px solid #222',paddingBottom:'12px'}}>{T('modal.title')}</div>
 
                 <div style={{marginBottom:'12px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Nom &amp; Prénom *</div>
-                  <input type="text" value={nom} onChange={e=>setNom(e.target.value)} placeholder="Ex : Marie Dupont" autoFocus style={inputStyle}/>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.name')}</div>
+                  <input type="text" value={nom} onChange={e=>setNom(e.target.value)} placeholder={T('modal.namePlaceholder')} autoFocus style={inputStyle}/>
                 </div>
                 <div style={{marginBottom:'12px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Adresse e-mail *</div>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.email')}</div>
                   <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.com" style={inputStyle}/>
                 </div>
                 <div style={{marginBottom:'12px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Téléphone</div>
-                  <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder="06 xx xx xx xx" style={inputStyle}/>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')}</div>
+                  <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/>
                 </div>
                 <div style={{marginBottom:'16px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>Message (optionnel)</div>
-                  <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Précisez votre projet, délais, budget..."
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div>
+                  <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder={T('modal.messagePlaceholder')}
                     rows={3} style={{...inputStyle,resize:'vertical'}}/>
                 </div>
 
                 <div style={{fontSize:'9px',color:'#aaa',marginBottom:'16px',lineHeight:'1.6'}}>
-                  Le récapitulatif de votre configuration sera joint à l'e-mail.
+                  {T('modal.summary')}
                 </div>
                 {status === 'error' && (
                   <div style={{background:'#fff3f3',border:'1px solid #f5c6cb',padding:'8px 12px',fontSize:'11px',color:'#c0392b',marginBottom:'12px'}}>
-                    Erreur d'envoi. Vérifiez que send.php est bien en ligne sur kuchee.com.
+                    {T('modal.error')}
                   </div>
                 )}
                 <div style={{display:'flex',gap:'8px'}}>
@@ -1166,7 +1632,7 @@
                   </button>
                   <button onClick={send} disabled={!isValid || status==='sending'}
                     style={{flex:2,padding:'10px',background:isValid?'#222':'#ccc',color:'#fff',border:'none',cursor:isValid?'pointer':'not-allowed',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'2px',transition:'background 0.2s'}}>
-                    {status==='sending' ? 'ENVOI EN COURS…' : 'ENVOYER MON DEVIS →'}
+                    {status==='sending' ? T('modal.sending') : T('modal.send')}
                   </button>
                 </div>
               </>
@@ -1177,7 +1643,7 @@
     }
 
     // ====== FINISH PICKER ======
-    function FinishPicker({ label, finish, onSelect, customColor, onCustomColor }) {
+    function FinishPicker({ label, finish, onSelect, customColor, onCustomColor, T }) {
       const [tab, setTab] = React.useState(finish.category || 'melamine');
       const tabStyle = (t) => ({
         fontSize:'9px', letterSpacing:'1.5px', padding:'4px 8px', cursor:'pointer',
@@ -1193,7 +1659,7 @@
           <div style={{display:'flex',gap:'2px',marginBottom:'8px'}}>
             {['bois','melamine','laque'].map(t => (
               <button key={t} style={tabStyle(t)} onClick={() => setTab(t)}>
-                {t==='melamine'?'MÉLAMINE':t.toUpperCase()}
+                {t==='melamine'?T('fin.melamine'):t==='bois'?T('fin.bois'):T('fin.laque')}
               </button>
             ))}
           </div>
@@ -1233,7 +1699,7 @@
                   onChange={e => { onCustomColor(e.target.value); onSelect({ id:'custom', name:'Sur mesure', hex: e.target.value, category:'laque' }); }}
                   style={{width:'28px',height:'28px',border:'1px solid #ccc',cursor:'pointer',padding:'1px'}}
                 />
-                <span style={{fontSize:'9px',color:'#888',letterSpacing:'1px'}}>SUR MESURE</span>
+                <span style={{fontSize:'9px',color:'#888',letterSpacing:'1px'}}>{T('fin.custom')}</span>
               </div>
             </div>
           )}
@@ -1269,6 +1735,13 @@
       const [customColorLow, setCustomColorLow]  = React.useState('#888888');
       const [customColorUp,  setCustomColorUp]   = React.useState('#888888');
       const [customColorCol, setCustomColorCol]  = React.useState('#888888');
+      const [locale,         setLocale]          = React.useState('fr');
+
+      const T = (key, ...args) => {
+        let s = (LANG[locale] ?? LANG.fr)[key] ?? LANG.fr[key] ?? key;
+        args.forEach((a, i) => { s = s.replace(`{${i}}`, a); });
+        return s;
+      };
 
       const svgRef    = React.useRef(null);
       const canvasRef = React.useRef(null);
@@ -1386,11 +1859,11 @@
       const upd = (id, ch) => setCabs(p => p.map(c => c.id===id ? {...c,...ch} : c));
 
       const addWin = () => {
-        if (winW < 30) { flash('error', "Largeur min. d'une fenêtre : 30cm"); return; }
-        if (winPos + winW > wallLen) { flash('error', "La fenêtre dépasse le mur"); return; }
+        if (winW < 30) { flash('error', T('flash.winMinWidth')); return; }
+        if (winPos + winW > wallLen) { flash('error', T('flash.winOverflow')); return; }
         setWins(p => [...p, {id:winIdCounter, pos:winPos, w:winW}]);
         setWinIdCounter(i => i+1);
-        flash('success', 'Fenêtre ajoutée');
+        flash('success', T('flash.winAdded'));
       };
 
       const getSvgCm = clientX => {
@@ -1424,18 +1897,18 @@
       const saveDesign = () => {
         try {
           localStorage.setItem('kitchenDesign', JSON.stringify({wallLen,colCfg,colTypes,extraCols,wins,cabs,doorStyle}));
-          flash('success','Design sauvegardé ✓');
-        } catch(e) { flash('error','Erreur sauvegarde'); }
+          flash('success', T('flash.saved'));
+        } catch(e) { flash('error', T('flash.saveError')); }
       };
       const loadDesign = () => {
         try {
           const saved = localStorage.getItem('kitchenDesign');
-          if (!saved) { flash('error','Aucun design sauvegardé'); return; }
+          if (!saved) { flash('error', T('flash.loadError')); return; }
           const d = JSON.parse(saved);
           setWallLen(d.wallLen); setColCfg(d.colCfg); setColTypes(d.colTypes); if(d.extraCols) setExtraCols(d.extraCols);
           setWins(d.wins); setCabs(d.cabs); setDoorStyle(d.doorStyle);
-          flash('success','Design chargé ✓');
-        } catch(e) { flash('error','Erreur chargement'); }
+          flash('success', T('flash.loaded'));
+        } catch(e) { flash('error', T('flash.loadError')); }
       };
       const exportToPng = () => {
         const svgEl = svgRef.current; if (!svgEl) return;
@@ -1443,24 +1916,24 @@
           .then(dataUrl => {
             const a = document.createElement('a');
             a.download = 'cuisine-elevation.png'; a.href = dataUrl; a.click();
-            flash('success','Export PNG ✓');
+            flash('success', T('flash.exportOk'));
           })
-          .catch(err => flash('error', 'Erreur export'));
+          .catch(err => flash('error', T('flash.exportError')));
       };
 
       // ── Panneaux ──────────────────────────────────────────────────────
       const LowerPanel = () => {
         if (!selLower) return (
           <div style={{fontSize:'11px',color:'#bbb',textAlign:'center',padding:'14px 0',border:'1px dashed #e8e8e8',marginBottom:'14px',borderRadius:'2px'}}>
-            Cliquer un meuble pour l'éditer
+            {T('pan.clickEdit')}
           </div>
         );
         const isEvierSel = EVIER_TYPES.includes(selLower.lowerType);
         const isLvSel    = selLower.lowerType==='lv';
         const isLlSel    = selLower.lowerType==='ll';
         return (
-          <Sec title={`Meuble bas · x=${selLower.x}cm · ${selLower.w}cm`}>
-            <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>LARGEUR</div>
+          <Sec title={`${T('lower.'+selLower.lowerType)||selLower.lowerType} · x=${selLower.x}cm · ${selLower.w}cm`}>
+            <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.width').toUpperCase()}</div>
             <div style={{display:'flex',gap:'4px',marginBottom:'10px',flexWrap:'wrap'}}>
               {(() => {
                 const typeObj = LOWER_TYPES.find(t => t.id === selLower.lowerType);
@@ -1473,7 +1946,7 @@
                 ));
               })()}
             </div>
-            <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>TYPE</div>
+            <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.type').toUpperCase()}</div>
             <div style={{display:'flex',flexDirection:'column',gap:'2px'}}>
               {LOWER_TYPES.filter(t => !t.hidden || selLower.lowerType === t.id).map((t, idx, arr) => {
                 const widthIncompat = t.widths && !t.widths.includes(selLower.w);
@@ -1486,17 +1959,17 @@
                 const lvDup         = t.id==='lv' && hasLV && !isLvSel;
                 const llDup         = t.id==='ll' && hasLl && !isLlSel;
                 const disabled = widthIncompat || colFourBlock || evierDup || lvDup || llDup || bouteilleFull;
-                const reason = widthIncompat ? `nécessite ${t.widths?.join(' ou ')}cm`
-                             : colFourBlock  ? 'incompatible avec colonne four'
-                             : evierDup      ? 'évier déjà présent'
-                             : lvDup         ? 'lave-vaisselle déjà présent'
-                             : llDup         ? 'lave-linge déjà présent'
-                             : bouteilleFull ? `max ${t.maxCount} rangements bouteilles` : '';
+                const reason = widthIncompat ? T('err.needsWidth', t.widths?.join(' ou '))
+                             : colFourBlock  ? T('err.noColFour')
+                             : evierDup      ? T('err.evierDup')
+                             : lvDup         ? T('err.lvDup')
+                             : llDup         ? T('err.llDup')
+                             : bouteilleFull ? T('err.bottleMax', t.maxCount) : '';
                 const prevGroup = idx > 0 ? arr[idx-1].group : null;
                 const showSep = t.group && t.group !== prevGroup;
                 return (
                   <React.Fragment key={t.id}>
-                    {showSep && idx > 0 && <div style={{fontSize:'8px',color:'#bbb',letterSpacing:'1.5px',marginTop:'5px',paddingTop:'4px',borderTop:'1px solid #f0f0f0',textTransform:'uppercase'}}>{t.group}</div>}
+                    {showSep && idx > 0 && <div style={{fontSize:'8px',color:'#bbb',letterSpacing:'1.5px',marginTop:'5px',paddingTop:'4px',borderTop:'1px solid #f0f0f0',textTransform:'uppercase'}}>{T('group.'+t.group)}</div>}
                     <Btn active={selLower.lowerType===t.id} disabled={disabled}
                       title={disabled ? reason : ''}
                       onClick={() => {
@@ -1520,7 +1993,7 @@
                         }
                       }}
                       style={{textAlign:'left',fontSize:'11px'}}>
-                      {t.label}{disabled ? ' ⊘' : ''}
+                      {T('lower.'+t.id)}{disabled ? ' ⊘' : ''}
                     </Btn>
                   </React.Fragment>
                 );
@@ -1533,12 +2006,12 @@
               const otherHasPlaque = cabs.some(c => c.id !== selLower.id && c.hasPlaque);
               const tooNarrow = selLower.w < 45;
               const disabled = isEvier || (otherHasPlaque && !selLower.hasPlaque) || tooNarrow;
-              const reason = isEvier ? 'Non disponible sur évier'
-                           : tooNarrow ? 'Largeur min. 45 cm pour plaque'
-                           : (otherHasPlaque && !selLower.hasPlaque) ? 'Plaque déjà placée' : '';
+              const reason = isEvier ? T('err.noEvier')
+                           : tooNarrow ? T('err.minWidth45')
+                           : (otherHasPlaque && !selLower.hasPlaque) ? T('err.plaqueAlready') : '';
               return (
                 <div style={{marginTop:'10px', paddingTop:'10px', borderTop:'1px solid #eee'}}>
-                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>PLAQUE DE CUISSON</div>
+                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.cooktop').toUpperCase()}</div>
                   <Btn
                     active={!!selLower.hasPlaque}
                     disabled={disabled}
@@ -1552,7 +2025,7 @@
                           : c.id === selLower.id ? {...c, hasPlaque: false} : c
                       ));
                     }}>
-                    🔥 {selLower.hasPlaque ? 'Plaque présente ✓' : 'Ajouter une plaque'}{disabled && !selLower.hasPlaque ? ' ⊘' : ''}
+                    🔥 {selLower.hasPlaque ? T('pan.cookTopOn') : T('pan.addCooktop')}{disabled && !selLower.hasPlaque ? ' ⊘' : ''}
                   </Btn>
                   {disabled && <div style={{fontSize:'10px',color:'#bbb',marginTop:'4px'}}>{reason}</div>}
                 </div>
@@ -1575,12 +2048,12 @@
               // Vérifier que le meuble haut au-dessus a la même largeur
               const upperMatch = cabs.find(c => c.x === selLower.x && c.w === selLower.w);
               const canConvert = isAdjacentToCol && [30,45,60].includes(selLower.w);
-              const blockReason = !isAdjacentToCol ? 'doit être adjacent à une colonne'
-                                : !canConvert      ? 'largeur doit être 30, 45 ou 60cm' : '';
+              const blockReason = !isAdjacentToCol ? T('err.adjacentCol')
+                                : !canConvert      ? T('err.convertWidth') : '';
               if (!canConvert && !isAdjacentToCol) return null;
               return (
                 <div style={{marginTop:'10px',paddingTop:'10px',borderTop:'1px solid #eee'}}>
-                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>CONVERSION</div>
+                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.convert').toUpperCase()}</div>
                   {canConvert ? (
                     <Btn style={{width:'100%',textAlign:'center'}} onClick={() => {
                       // Supprimer le meuble bas et le meuble haut correspondant
@@ -1592,7 +2065,7 @@
                       setCabs(newCabs);
                       setSelLowerId(null);
                     }}>
-                      ➕ Convertir en colonne
+                      {T('pan.convertBtn')}
                     </Btn>
                   ) : (
                     <div style={{fontSize:'10px',color:'#bbb'}}>{blockReason}</div>
@@ -1608,40 +2081,40 @@
         if (!selUpper) return null;
         const isWinZone = hasWinOverlap(selUpper, wins);
         return (
-          <Sec title={`Meuble haut · x=${selUpper.x}cm · ${selUpper.w}cm`}>
+          <Sec title={`${T('upper.'+selUpper.upperType)||''} · x=${selUpper.x}cm · ${selUpper.w}cm`}>
             {isWinZone ? (
               <div style={{fontSize:'11px',color:'#c87000',padding:'6px 8px',border:'1px solid #f0c060',background:'#fffbf0',borderRadius:'2px'}}>
-                ⚠ Zone fenêtre — aucun élément haut possible
+                {T('pan.windowZone')}
               </div>
             ) : (<>
-              <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>ÉLÉMENT HAUT</div>
+              <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.upperElem').toUpperCase()}</div>
               <div style={{display:'flex',gap:'4px',marginBottom:'8px',flexWrap:'wrap'}}>
-                <Btn active={selUpper.upperMode==='upper'} onClick={() => upd(selUpper.id,{upperMode:'upper'})}>Meuble</Btn>
+                <Btn active={selUpper.upperMode==='upper'} onClick={() => upd(selUpper.id,{upperMode:'upper'})}>{T('btn.furniture')}</Btn>
                 <Btn active={selUpper.upperMode==='hood'}
                   disabled={selUpper.w<60 || (hasHood && selUpper.upperMode!=='hood')}
-                  title={selUpper.w<60 ? 'Hotte nécessite ≥60cm' : (hasHood && selUpper.upperMode!=='hood') ? 'Hotte déjà placée' : ''}
+                  title={selUpper.w<60 ? T('err.hoodNeeds60') : (hasHood && selUpper.upperMode!=='hood') ? T('err.hoodAlready') : ''}
                   onClick={() => upd(selUpper.id,{upperMode:'hood',hoodW:Math.min(60,selUpper.w)})}>
                   Hotte 🔥
                 </Btn>
-                <Btn active={selUpper.upperMode==='none'} onClick={() => upd(selUpper.id,{upperMode:'none'})}>Aucun</Btn>
+                <Btn active={selUpper.upperMode==='none'} onClick={() => upd(selUpper.id,{upperMode:'none'})}>{T('btn.none')}</Btn>
               </div>
               {hasHood && selUpper.upperMode!=='hood' && (
                 <div style={{fontSize:'10px',color:'#c87000',padding:'5px 6px',border:'1px solid #f0c060',background:'#fffbf0',borderRadius:'2px',marginBottom:'8px'}}>
-                  ⚠ Une seule hotte possible
+                  {T('pan.hoodOnce')}
                 </div>
               )}
               {selUpper.upperMode==='upper' && (<>
-                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>STYLE</div>
+                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.style').toUpperCase()}</div>
                 <div style={{display:'flex',flexDirection:'column',gap:'3px',marginBottom:'6px'}}>
                   {UPPER_TYPES.map(t => (
                     <Btn key={t.id} active={selUpper.upperType===t.id}
                       onClick={() => upd(selUpper.id,{upperType:t.id})}
-                      style={{textAlign:'left',fontSize:'11px'}}>{t.label}</Btn>
+                      style={{textAlign:'left',fontSize:'11px'}}>{T('upper.'+t.id)}</Btn>
                   ))}
                 </div>
               </>)}
               {selUpper.upperMode==='hood' && selUpper.w>=60 && (<>
-                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>LARGEUR HOTTE</div>
+                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.hoodWidth').toUpperCase()}</div>
                 <div style={{display:'flex',gap:'4px'}}>
                   {[60,90].filter(hw => hw<=selUpper.w).map(hw => (
                     <Btn key={hw} active={selUpper.hoodW===hw} onClick={() => upd(selUpper.id,{hoodW:hw})}>{hw}cm</Btn>
@@ -1655,7 +2128,7 @@
 
       // ── Rendu principal ───────────────────────────────────────────────
       const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol });
-      const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol });
+      const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol, T, locale });
 
       return (
         <div style={{fontFamily:'Courier New, monospace',background:'#fff',minHeight:'100vh',color:'#222',display:'flex',flexDirection:'column'}}
@@ -1667,8 +2140,8 @@
           <div style={{padding:'10px 20px',borderBottom:'1px solid #e8e8e8',background:'#fff',display:'flex',alignItems:'center',gap:'16px'}}>
             <a href="https://kuchee.com/" style={{fontSize:'12px',letterSpacing:'3px',color:'#111',fontWeight:'bold',textDecoration:'none',marginRight:'4px'}}>HOME</a>
             <span style={{color:'#ddd',fontSize:'12px'}}>|</span>
-            <span style={{fontSize:'14px',letterSpacing:'5px',color:'#111',fontWeight:'bold'}}>LINÉAIRE CUISINE</span>
-            <span style={{fontSize:'9px',color:'#bbb',letterSpacing:'2px'}}>GÉNÉRATEUR 2D · VUE EN ÉLÉVATION</span>
+            <span style={{fontSize:'14px',letterSpacing:'5px',color:'#111',fontWeight:'bold'}}>{T('hdr.title')}</span>
+            <span style={{fontSize:'9px',color:'#bbb',letterSpacing:'2px'}}>{T('hdr.subtitle')}</span>
             {statusMsg && (
               <div style={{marginLeft:'auto',fontSize:'8px',padding:'3px 10px',border:'1px solid',borderRadius:'2px',
                 color: statusMsg.type==='success' ? '#1a7a3a' : '#cc2222',
@@ -1677,6 +2150,20 @@
                 {statusMsg.text}
               </div>
             )}
+            {/* Sélecteur de langue */}
+            <div style={{marginLeft: statusMsg ? '12px' : 'auto', display:'flex', gap:'2px', flexShrink:0}}>
+              {['fr','en','it','es','de'].map(l => (
+                <button key={l} onClick={() => setLocale(l)}
+                  style={{padding:'3px 6px', fontSize:'9px', letterSpacing:'1px',
+                    fontFamily:'Courier New,monospace', border:'1px solid',
+                    borderRadius:'2px', cursor:'pointer', textTransform:'uppercase',
+                    background: locale===l ? '#222' : '#fff',
+                    color: locale===l ? '#fff' : '#888',
+                    borderColor: locale===l ? '#222' : '#ddd'}}>
+                  {l}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div style={{display:'flex',flex:1,overflow:'hidden'}}>
@@ -1684,7 +2171,7 @@
             {/* ── Sidebar ── */}
             <div style={{width:'260px',flexShrink:0,background:'#fafafa',borderRight:'1px solid #e8e8e8',padding:'14px',overflowY:'auto',display:'flex',flexDirection:'column'}}>
 
-              <Sec title="Longueur du mur">
+              <Sec title={T("sec.wallLen")}>
                 <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                   <input type="range" min={180} max={600} step={15} value={wallLen}
                     onChange={e => { const v=+e.target.value; setWallLen(v); regenCabs(v,colCfg); }}
@@ -1693,7 +2180,7 @@
                 </div>
               </Sec>
 
-              <Sec title="Colonnes">
+              <Sec title={T("sec.columns")}>
                 <div style={{display:'flex',gap:'4px',marginBottom:'6px'}}>
                   {['none','A','B','C','D','E'].map(c => (
                     <Btn key={c} active={colCfg===c} onClick={() => { setColCfg(c); regenCabs(wallLen,c); }}>
@@ -1702,20 +2189,20 @@
                   ))}
                 </div>
                 <div style={{fontSize:'11px',color:'#aaa'}}>
-                  {colCfg==='A' && '1 gauche + 1 droite'}
-                  {colCfg==='B' && '2 colonnes à droite'}
-                  {colCfg==='C' && '2 colonnes à gauche'}
-                  {colCfg==='D' && '1 colonne à gauche'}
-                  {colCfg==='E' && '1 colonne à droite'}
-                  {colCfg==='none' && 'Aucune colonne'}
+                  {colCfg==='A' && T('col.A')}
+                  {colCfg==='B' && T('col.B')}
+                  {colCfg==='C' && T('col.C')}
+                  {colCfg==='D' && T('col.D')}
+                  {colCfg==='E' && T('col.E')}
+                  {colCfg==='none' && T('col.none')}
                 </div>
               </Sec>
 
               {colCfg!=='none' && cols.length>0 && (
-                <Sec title="Type de colonne">
+                <Sec title={T("sec.colType")}>
                   {selectedColIdx!==null ? (<>
                     <div style={{fontSize:'11px',color:'#3366cc',marginBottom:'8px'}}>
-                      Colonne {selectedColIdx+1} — {cols[selectedColIdx]}cm
+                      {T('sec.colType')} {selectedColIdx+1} — {cols[selectedColIdx]}cm
                     </div>
                     <div style={{display:'flex',flexDirection:'column',gap:'3px',marginBottom:'8px'}}>
                       {COL_TYPES.map(t => {
@@ -1736,7 +2223,7 @@
                         return (
                         <Btn key={t.id} active={(colTypes[selectedColIdx]||'colonne')===t.id}
                           disabled={disabled}
-                          title={disabled ? 'Uniquement pour colonne en bout de linéaire' : ''}
+                          title={disabled ? T('err.notExtreme') : ''}
                           onClick={() => !disabled && setColTypes(prev => { const a=[...prev]; a[selectedColIdx]=t.id; return a; })}
                           style={{textAlign:'left',fontSize:'11px'}}>
                           {t.id==='colonne'?'◼ ':t.id==='frigo'?'❄ ':'🔥 '}{t.label}
@@ -1744,13 +2231,13 @@
                         );
                       })}
                     </div>
-                    {hasColFour && <div style={{fontSize:'10px',color:'#c87000',padding:'5px 6px',border:'1px solid #f0c060',background:'#fffbf0',borderRadius:'2px',marginBottom:'6px'}}>⚠ Four bas désactivé</div>}
-                    <Btn onClick={() => setSelectedColIdx(null)} style={{fontSize:'8px',width:'100%',textAlign:'center'}}>← Retour</Btn>
+                    {hasColFour && <div style={{fontSize:'10px',color:'#c87000',padding:'5px 6px',border:'1px solid #f0c060',background:'#fffbf0',borderRadius:'2px',marginBottom:'6px'}}>{T('pan.fourDisabled')}</div>}
+                    <Btn onClick={() => setSelectedColIdx(null)} style={{fontSize:'8px',width:'100%',textAlign:'center'}}>{T('btn.back')}</Btn>
                   </>) : (
                     <div style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
                       {cols.map((cx,i) => (
                         <Btn key={i} onClick={() => { setSelectedColIdx(i); clearSel(); }} style={{fontSize:'9px'}}>
-                          Col.{i+1} {colTypes[i]==='frigo'?'❄':colTypes[i]==='four'?'🔥':'◼'}
+                          {T('sec.colType').split(' ')[0]}.{i+1} {colTypes[i]==='frigo'?'❄':colTypes[i]==='four'?'🔥':'◼'}
                         </Btn>
                       ))}
                     </div>
@@ -1758,7 +2245,7 @@
                 </Sec>
               )}
 
-              <Sec title="Fenêtres">
+              <Sec title={T("sec.windows")}>
                 {wins.map(w => (
                   <div key={w.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:'12px',color:'#3366cc',marginBottom:'6px'}}>
                     <span>⊞ {w.pos}cm + {w.w}cm</span>
@@ -1766,27 +2253,27 @@
                       style={{background:'none',border:'none',color:'#cc3333',cursor:'pointer',fontSize:'14px',padding:'0 2px',lineHeight:1}}>×</button>
                   </div>
                 ))}
-                <div style={{fontSize:'10px',color:'#bbb',marginBottom:'6px'}}>↔ Glisser sur le plan</div>
+                <div style={{fontSize:'10px',color:'#bbb',marginBottom:'6px'}}>{T('win.drag')}</div>
                 <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>POSITION</div>
+                    <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>{T('win.position').toUpperCase()}</div>
                     <input type="number" value={winPos}
                       onChange={e => setWinPos(Math.max(0, Math.min(wallLen-winW, +e.target.value)))} />
                   </div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>LARGEUR</div>
+                    <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>{T('pan.width').toUpperCase()}</div>
                     <input type="number" value={winW}
                       onChange={e => setWinW(Math.max(30, Math.min(wallLen-winPos, +e.target.value)))} />
                   </div>
                 </div>
-                <Btn onClick={addWin} style={{width:'100%',textAlign:'center'}}>+ Ajouter fenêtre</Btn>
+                <Btn onClick={addWin} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
               </Sec>
 
               {selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
                 const ec = extraCols.find(c=>c.id===selectedExtraColId);
                 return (
-                  <Sec title={`Colonne ajoutée · ${ec.w}cm`}>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>LARGEUR</div>
+                  <Sec title={`${T('sec.extraCol')} · ${ec.w}cm`}>
+                    <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.width').toUpperCase()}</div>
                     <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
                       {[30,45,60].map(sz => (
                         <Btn key={sz} active={ec.w===sz}
@@ -1829,16 +2316,16 @@
                         </Btn>
                       ))}
                     </div>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>TYPE</div>
+                    <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.type').toUpperCase()}</div>
                     <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
                       <Btn active={ec.colType!=='four'}
                         onClick={() => setExtraCols(prev => prev.map(c => c.id===ec.id ? {...c, colType:'colonne'} : c))}>
-                        Rangement
+                        {T('pan.storage')}
                       </Btn>
                       <Btn active={ec.colType==='four'} disabled={ec.w!==60}
-                        title={ec.w!==60 ? 'Nécessite 60cm' : ''}
+                        title={ec.w!==60 ? T('err.needs60') : ''}
                         onClick={() => ec.w===60 && setExtraCols(prev => prev.map(c => c.id===ec.id ? {...c, colType:'four'} : c))}>
-                        Four {ec.w!==60 ? '⊘' : ''}
+                        {T('pan.oven')} {ec.w!==60 ? '⊘' : ''}
                       </Btn>
                     </div>
                     <Btn style={{width:'100%',textAlign:'center'}}
@@ -1868,10 +2355,10 @@
                     Budget estimatif
                   </div>
                   {[
-                    ['Meubles bas',    fmt(price.lower),  null],
-                    ['Meubles hauts',  fmt(price.upper),  null],
-                    price.cols > 0 ? ['Colonnes', fmt(price.cols), null] : null,
-                    ['Plan de travail stratifié', fmt(price.worktop), null],
+                    [T('bud.lower'),   fmt(price.lower, locale),  null],
+                    [T('bud.upper'),   fmt(price.upper, locale),  null],
+                    price.cols > 0 ? [T('bud.cols'), fmt(price.cols, locale), null] : null,
+                    [T('bud.worktop'), fmt(price.worktop, locale), null],
                   ].filter(Boolean).map(([label, lo, hi]) => (
                     <div key={label} style={{display:'flex',justifyContent:'space-between',fontSize:'10px',marginBottom:'4px',color:'#555'}}>
                       <span>{label}</span>
@@ -1881,17 +2368,17 @@
                     </div>
                   ))}
                   <div style={{borderTop:'1px solid #ddd',marginTop:'8px',paddingTop:'8px',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-                    <span style={{fontSize:'9px',letterSpacing:'1px',color:'#888',textTransform:'uppercase'}}>Total HT</span>
+                    <span style={{fontSize:'9px',letterSpacing:'1px',color:'#888',textTransform:'uppercase'}}>{T('bud.totalHT')}</span>
                     <span style={{fontSize:'13px',fontWeight:'bold',color:'#111',letterSpacing:'-0.5px'}}>
-                    {fmt(price.total)}
+                    {fmt(price.total, locale)}
                     </span>
                   </div>
                   <div style={{fontSize:'8.5px',color:'#bbb',marginTop:'5px',lineHeight:'1.5'}}>
-                    Fourniture + pose · hors TVA
+                    {T('bud.delivery')}
                   </div>
                   {needsElec && (
                     <div style={{fontSize:'8.5px',color:'#c07000',marginTop:'4px',lineHeight:'1.5',borderTop:'1px solid #f0e0c0',paddingTop:'4px'}}>
-                      ⚡ Budget électroménager non inclus{hasFrigoLibre ? ' (frigo)' : ''}{hasLV ? ' (LV)' : ''}{hasLl ? ' (LL)' : ''}
+                      {T('bud.elec')}{hasFrigoLibre ? ' ('+T('col.frigo_libre').split(' ')[0]+')' : ''}{hasLV ? ' ('+T('lower.lv')+')' : ''}{hasLl ? ' ('+T('lower.ll')+')' : ''}
                     </div>
                   )}
                 </div>
@@ -1901,24 +2388,24 @@
               {/* ── Finitions ── */}
               <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8'}}>
                 <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'12px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
-                  Finitions façades
+                  {T('sec.finishes')}
                 </div>
                 <FinishPicker
-                  label="Meubles bas"
+                  label={T('bud.lower')} T={T}
                   finish={finishLower}
                   onSelect={setFinishLower}
                   customColor={customColorLow}
                   onCustomColor={setCustomColorLow}
                 />
                 <FinishPicker
-                  label="Meubles hauts"
+                  label={T('bud.upper')} T={T}
                   finish={finishUpper}
                   onSelect={setFinishUpper}
                   customColor={customColorUp}
                   onCustomColor={setCustomColorUp}
                 />
                 <FinishPicker
-                  label="Colonnes"
+                  label={T('bud.cols')} T={T}
                   finish={finishCol}
                   onSelect={setFinishCol}
                   customColor={customColorCol}
@@ -1929,13 +2416,13 @@
               <div style={{marginTop:'auto',paddingTop:'10px',borderTop:'1px solid #e8e8e8'}}>
                 {phase==='layout' ? (
                   <Btn onClick={() => setPhase('finish')} style={{width:'100%',padding:'10px',textAlign:'center',letterSpacing:'1px',fontSize:'9px'}}>
-                    VALIDER L'IMPLANTATION →
+                    {T('act.validate')}
                   </Btn>
                 ) : (<>
-                  <div style={{fontSize:'10px',color:'#999',marginBottom:'8px',letterSpacing:'2px'}}>STYLE DE PORTE</div>
+                  <div style={{fontSize:'10px',color:'#999',marginBottom:'8px',letterSpacing:'2px'}}>{T('sec.doorStyle').toUpperCase()}</div>
                   <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
-                    <Btn active={doorStyle==='smooth'} onClick={() => setDoorStyle('smooth')}>Lisse</Btn>
-                    <Btn active={doorStyle==='frame'}  onClick={() => setDoorStyle('frame')}>Cadre</Btn>
+                    <Btn active={doorStyle==='smooth'} onClick={() => setDoorStyle('smooth')}>{T('door.smooth')}</Btn>
+                    <Btn active={doorStyle==='frame'}  onClick={() => setDoorStyle('frame')}>{T('door.frame')}</Btn>
                   </div>
                   <div style={{display:'flex',gap:'4px',marginBottom:'8px'}}>
                     <Btn onClick={saveDesign}  style={{flex:1,textAlign:'center',fontSize:'11px'}}> 💾</Btn>
@@ -1945,9 +2432,9 @@
                   <button
                     onClick={() => setShowLeadModal(true)}
                     style={{width:'100%',padding:'10px',background:'#222',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Courier New,monospace',fontSize:'10px',letterSpacing:'2px',marginBottom:'6px',textAlign:'center'}}>
-                    📧 RECEVOIR MON DEVIS
+                    {T('act.sendQuote')}
                   </button>
-                  <Btn onClick={() => setPhase('layout')} style={{width:'100%',textAlign:'center',fontSize:'9px'}}>← Modifier</Btn>
+                  <Btn onClick={() => setPhase('layout')} style={{width:'100%',textAlign:'center',fontSize:'9px'}}>{T('act.modify')}</Btn>
                 </>)}
               </div>
             </div>
@@ -1960,8 +2447,8 @@
                 onClick={e => e.stopPropagation()}>
                 {/* Barre titre du plan */}
                 <div style={{padding:'7px 14px',background:'#f9f9f9',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',fontSize:'7.5px',color:'#999',fontFamily:'monospace'}}>
-                  <span>ÉLÉVATION MUR — L={wallLen}cm{colCfg!=='none'?` · COL.${colCfg}`:''}</span>
-                  <span>MB=85 · MH=72 · COL=215cm · ÉCH.1:1</span>
+                  <span>{T('svg.elevation')} — L={wallLen}cm{colCfg!=='none'?` · COL.${colCfg}`:''}</span>
+                  <span>{T('svg.dims')}</span>
                 </div>
 
                 <svg ref={svgRef}
@@ -2081,12 +2568,12 @@
 
               {/* Légende */}
               <div style={{display:'flex',gap:'16px',marginTop:'12px',fontSize:'11px',color:'#999',flexWrap:'wrap'}}>
-                <span>◻ Meuble bas — clic pour éditer</span>
-                <span>▦ Meuble haut — clic pour éditer</span>
-                <span>▽ Hotte 🔥</span>
-                <span>⊞ Fenêtre — glisser ↔</span>
-                <span>◼ Colonne — clic pour type</span>
-                {Math.abs(diff)<=0.5 && cabs.length>0 && <span style={{color:'#1a7a3a',fontWeight:'bold'}}>✓ Calepinage correct · {wallLen}cm</span>}
+                <span>◻ {T('leg.lower')}</span>
+                <span>▦ {T('leg.upper')}</span>
+                <span>▽ {T('leg.hood')}</span>
+                <span>⊞ {T('leg.window')}</span>
+                <span>◼ {T('leg.col')}</span>
+                {Math.abs(diff)<=0.5 && cabs.length>0 && <span style={{color:'#1a7a3a',fontWeight:'bold'}}>{T('leg.ok')} · {wallLen}cm</span>}
               </div>
             </div>
           </div>
@@ -2097,6 +2584,7 @@
               onClose={() => setShowLeadModal(false)}
               quoteSummary={quoteSummary}
               svgRef={svgRef}
+              T={T}
             />
           )}
 
