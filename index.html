@@ -1858,6 +1858,27 @@
 
       const upd = (id, ch) => setCabs(p => p.map(c => c.id===id ? {...c,...ch} : c));
 
+      const swapCab = (id, dir) => {
+        const idx = cabs.findIndex(c => c.id === id);
+        if (idx === -1) return;
+        const targetIdx = idx + dir;
+        if (targetIdx < 0 || targetIdx >= cabs.length) return;
+        const [start] = getCabRange(wallLen, colCfg);
+        const newCabs = [...cabs];
+        // Swap uniquement les données, pas les positions x (repackCabs les recalcule)
+        const a = { ...newCabs[idx],       w: newCabs[targetIdx].w,
+                    lowerType: newCabs[targetIdx].lowerType, upperMode: newCabs[targetIdx].upperMode,
+                    upperType: newCabs[targetIdx].upperType, hoodW: newCabs[targetIdx].hoodW,
+                    hasPlaque: newCabs[targetIdx].hasPlaque };
+        const b = { ...newCabs[targetIdx], w: newCabs[idx].w,
+                    lowerType: newCabs[idx].lowerType, upperMode: newCabs[idx].upperMode,
+                    upperType: newCabs[idx].upperType, hoodW: newCabs[idx].hoodW,
+                    hasPlaque: newCabs[idx].hasPlaque };
+        newCabs[idx] = a;
+        newCabs[targetIdx] = b;
+        setCabs(repackCabs(newCabs, start, extraCols));
+      };
+
       const addWin = () => {
         if (winW < 30) { flash('error', T('flash.winMinWidth')); return; }
         if (winPos + winW > wallLen) { flash('error', T('flash.winOverflow')); return; }
@@ -2352,7 +2373,7 @@
                 return (
                 <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8',borderRadius:'2px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'10px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
-                    Budget estimatif
+                    {T('sec.budget')}
                   </div>
                   {[
                     [T('bud.lower'),   fmt(price.lower, locale),  null],
@@ -2565,6 +2586,50 @@
                   </g>
                 </svg>
               </div>
+
+              {/* Boutons swap — centrés sous le dessin, visibles si meuble bas sélectionné */}
+              {selLowerId !== null && (() => {
+                const idx = cabs.findIndex(c => c.id === selLowerId);
+                const canLeft  = idx > 0;
+                const canRight = idx < cabs.length - 1;
+                const cab = cabs[idx];
+                return (
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginTop:'14px',width:'100%'}}>
+                    <button
+                      onClick={e => { e.stopPropagation(); swapCab(selLowerId, -1); }}
+                      disabled={!canLeft}
+                      title="Déplacer à gauche"
+                      style={{padding:'7px 22px',fontSize:'16px',fontFamily:'Courier New,monospace',
+                        cursor:canLeft?'pointer':'not-allowed',
+                        background:canLeft?'#222':'#e8e8e8',
+                        color:canLeft?'#fff':'#ccc',
+                        border:'1px solid '+(canLeft?'#222':'#ddd'),
+                        borderRadius:'2px',lineHeight:1,transition:'all 0.12s'}}>
+                      ◀
+                    </button>
+                    <div style={{textAlign:'center',fontFamily:'Courier New,monospace'}}>
+                      <div style={{fontSize:'10px',color:'#888',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'2px'}}>
+                        {cab ? T('lower.'+cab.lowerType) : ''}
+                      </div>
+                      <div style={{fontSize:'9px',color:'#bbb',letterSpacing:'1px'}}>
+                        {idx+1} / {cabs.length} · {cab ? cab.w+'cm' : ''}
+                      </div>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); swapCab(selLowerId, +1); }}
+                      disabled={!canRight}
+                      title="Déplacer à droite"
+                      style={{padding:'7px 22px',fontSize:'16px',fontFamily:'Courier New,monospace',
+                        cursor:canRight?'pointer':'not-allowed',
+                        background:canRight?'#222':'#e8e8e8',
+                        color:canRight?'#fff':'#ccc',
+                        border:'1px solid '+(canRight?'#222':'#ddd'),
+                        borderRadius:'2px',lineHeight:1,transition:'all 0.12s'}}>
+                      ▶
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Légende */}
               <div style={{display:'flex',gap:'16px',marginTop:'12px',fontSize:'11px',color:'#999',flexWrap:'wrap'}}>
