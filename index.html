@@ -112,8 +112,8 @@
         'flash.exportOk':'Export PNG ✓','flash.saveError':'Erreur sauvegarde',
         'flash.loadError':'Aucun design sauvegardé','flash.exportError':'Erreur export',
         // Phases / actions
-        'act.validate':'VALIDER L\'IMPLANTATION →','act.modify':'← Modifier',
-        'act.sendQuote':'📧 RECEVOIR MON DEVIS',
+        'act.validate':'🎨 JE DÉCORE MA CUISINE →','act.modify':'← Modifier',
+        'act.sendQuote':'📧 RECEVOIR MON DEVIS + PLAN',
         // Budget panel
         'bud.lower':'Meubles bas','bud.upper':'Meubles hauts','bud.cols':'Colonnes',
         'bud.worktop':'Plan de travail stratifié','bud.totalHT':'Total HT',
@@ -206,8 +206,8 @@
         'flash.saved':'Design saved ✓','flash.loaded':'Design loaded ✓',
         'flash.exportOk':'PNG export ✓','flash.saveError':'Save error',
         'flash.loadError':'No saved design','flash.exportError':'Export error',
-        'act.validate':'CONFIRM LAYOUT →','act.modify':'← Edit layout',
-        'act.sendQuote':'📧 RECEIVE MY QUOTE',
+        'act.validate':'🎨 DECORATE MY KITCHEN →','act.modify':'← Edit layout',
+        'act.sendQuote':'📧 RECEIVE MY QUOTE + PLAN',
         'bud.lower':'Base units','bud.upper':'Wall units','bud.cols':'Columns',
         'bud.worktop':'Laminate worktop','bud.totalHT':'Total excl. VAT',
         'bud.delivery':'Supply + delivery · excl. VAT',
@@ -294,8 +294,8 @@
         'flash.saved':'Design salvato ✓','flash.loaded':'Design caricato ✓',
         'flash.exportOk':'Esportazione PNG ✓','flash.saveError':'Errore salvataggio',
         'flash.loadError':'Nessun design salvato','flash.exportError':'Errore esportazione',
-        'act.validate':'CONFERMA LAYOUT →','act.modify':'← Modifica',
-        'act.sendQuote':'📧 RICEVI IL MIO PREVENTIVO',
+        'act.validate':'🎨 DECORO LA MIA CUCINA →','act.modify':'← Modifica',
+        'act.sendQuote':'📧 RICEVI IL MIO PREVENTIVO + PIANTA',
         'bud.lower':'Basi','bud.upper':'Pensili','bud.cols':'Colonne',
         'bud.worktop':'Piano laminato','bud.totalHT':'Totale IVA escl.',
         'bud.delivery':'Fornitura + consegna · IVA esclusa',
@@ -382,8 +382,8 @@
         'flash.saved':'Diseño guardado ✓','flash.loaded':'Diseño cargado ✓',
         'flash.exportOk':'Exportación PNG ✓','flash.saveError':'Error al guardar',
         'flash.loadError':'Sin diseño guardado','flash.exportError':'Error de exportación',
-        'act.validate':'CONFIRMAR DISTRIBUCIÓN →','act.modify':'← Modificar',
-        'act.sendQuote':'📧 RECIBIR MI PRESUPUESTO',
+        'act.validate':'🎨 DECORAR MI COCINA →','act.modify':'← Modificar',
+        'act.sendQuote':'📧 RECIBIR MI PRESUPUESTO + PLANO',
         'bud.lower':'Muebles bajos','bud.upper':'Muebles altos','bud.cols':'Columnas',
         'bud.worktop':'Encimera laminada','bud.totalHT':'Total sin IVA',
         'bud.delivery':'Suministro + entrega · sin IVA',
@@ -470,8 +470,8 @@
         'flash.saved':'Design gespeichert ✓','flash.loaded':'Design geladen ✓',
         'flash.exportOk':'PNG-Export ✓','flash.saveError':'Speicherfehler',
         'flash.loadError':'Kein gespeichertes Design','flash.exportError':'Exportfehler',
-        'act.validate':'AUFTEILUNG BESTÄTIGEN →','act.modify':'← Bearbeiten',
-        'act.sendQuote':'📧 ANGEBOT ERHALTEN',
+        'act.validate':'🎨 MEINE KÜCHE GESTALTEN →','act.modify':'← Bearbeiten',
+        'act.sendQuote':'📧 ANGEBOT + PLAN ERHALTEN',
         'bud.lower':'Unterschränke','bud.upper':'Oberschränke','bud.cols':'Hochschränke',
         'bud.worktop':'Laminat-Arbeitsplatte','bud.totalHT':'Gesamt ohne MwSt.',
         'bud.delivery':'Lieferung + Montage · ohne MwSt.',
@@ -1006,32 +1006,51 @@
       );
     });
 
-    const WinSvg = ({ win, onDragStart, isDragging }) => {
+    const WinSvg = ({ win, onDragStart, onResizeStart, onSelect, isDragging, isResizing, isSelected }) => {
       const x = win.pos + C.MARGIN;
       const yT = svgY(190), yB = svgY(93), h = yB - yT;
+      const gripW = 6, gripH = 16;
+      const active = isDragging || isResizing;
       return (
-        <g onMouseDown={e => { e.preventDefault(); onDragStart(win.id, win.pos, e); }}
-           onTouchStart={e => { e.preventDefault(); onDragStart(win.id, win.pos, e.touches[0]); }}
-           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
-          <rect x={x} y={yT} width={win.w} height={h}
-            fill={isDragging ? '#bbddff' : '#d6eaff'}
-            stroke={isDragging ? '#3366cc' : '#7a9acc'} strokeWidth={isDragging ? 1.5 : 0.8} />
-          <line x1={x} y1={yT+h/2} x2={x+win.w} y2={yT+h/2} stroke="#9ab" strokeWidth={0.5} />
-          <line x1={x+win.w/2} y1={yT} x2={x+win.w/2} y2={yB} stroke="#9ab" strokeWidth={0.5} />
-          <text x={x+8} y={yT+h/2+2} textAnchor="middle" fontSize={7} fill="#3366cc">◁</text>
-          <text x={x+win.w-8} y={yT+h/2+2} textAnchor="middle" fontSize={7} fill="#3366cc">▷</text>
-          <text x={x+win.w/2} y={yT-3} textAnchor="middle" fontSize={7} fill="#3366cc" fontFamily="Courier New, monospace">⊞ {win.w}cm · pos:{win.pos}cm</text>
+        <g>
+          {/* Corps fenêtre — drag pour déplacer */}
+          <g onMouseDown={e => { e.preventDefault(); onDragStart(win.id, win.pos, e); }}
+             onTouchStart={e => { e.preventDefault(); onDragStart(win.id, win.pos, e.touches[0]); }}
+             onClick={e => { e.stopPropagation(); onSelect(win.id); }}
+             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
+            <rect x={x} y={yT} width={win.w} height={h}
+              fill={active ? '#bbddff' : isSelected ? '#c8e0ff' : '#d6eaff'}
+              stroke={active||isSelected ? '#3366cc' : '#7a9acc'}
+              strokeWidth={active||isSelected ? 1.5 : 0.8} />
+            <line x1={x} y1={yT+h/2} x2={x+win.w} y2={yT+h/2} stroke="#9ab" strokeWidth={0.5} />
+            <line x1={x+win.w/2} y1={yT} x2={x+win.w/2} y2={yB} stroke="#9ab" strokeWidth={0.5} />
+            <text x={x+8} y={yT+h/2+2} textAnchor="middle" fontSize={7} fill="#3366cc">◁</text>
+            <text x={x+win.w-8} y={yT+h/2+2} textAnchor="middle" fontSize={7} fill="#3366cc">▷</text>
+            <text x={x+win.w/2} y={yT-3} textAnchor="middle" fontSize={7} fill="#3366cc" fontFamily="Courier New, monospace">⊞ {win.w}cm · pos:{win.pos}cm</text>
+          </g>
+          {/* Poignée resize — bord droit, visible si sélectionnée */}
+          {isSelected && (
+            <g onMouseDown={e => { e.preventDefault(); onResizeStart(win.id, win.w, e); }}
+               style={{ cursor: 'ew-resize' }}>
+              <rect x={x+win.w-gripW/2} y={yT+(h-gripH)/2} width={gripW} height={gripH}
+                rx={2} fill="#1a56cc" opacity={0.85}/>
+              <line x1={x+win.w-gripW/2+2} y1={yT+(h-gripH)/2+4} x2={x+win.w-gripW/2+2} y2={yT+(h+gripH)/2-4} stroke="white" strokeWidth={1} opacity={0.7}/>
+              <line x1={x+win.w+gripW/2-2} y1={yT+(h-gripH)/2+4} x2={x+win.w+gripW/2-2} y2={yT+(h+gripH)/2-4} stroke="white" strokeWidth={1} opacity={0.7}/>
+            </g>
+          )}
         </g>
       );
     };
 
-    const LowerSvg = ({ cab, selected, onSelect, doorStyle, facadeFill='#fff' }) => {
+    const LowerSvg = ({ cab, selected, onSelect, doorStyle, facadeFill='#fff', canSwapLeft, canSwapRight, onSwapLeft, onSwapRight }) => {
       const x = cab.x + C.MARGIN, y = svgY(C.LOWER_H);
       const cw = cab.w;
-      const h  = C.LOWER_H - C.PLINTH_H; // 75 — corps sans plinthe
+      const h  = C.LOWER_H - C.PLINTH_H;
       const isInvalid = cab.lowerType === 'bouteille' ? cw < 15 : cw < 30;
       const ctY = svgY(C.LOWER_H + C.COUNTER_H);
       const cx  = x + cw / 2;
+      const cy  = y + h / 2;
+      const arrowW = 10, arrowH = 14;
 
       return (
         <g onClick={e => { e.stopPropagation(); onSelect(e); }} style={{ cursor: 'pointer' }}>
@@ -1295,6 +1314,26 @@
 
           {/* Plaque de cuisson */}
           {cab.hasPlaque && <Casserole cx={cx} ctY={ctY} cw={cw}/>}
+
+          {/* Flèches swap — visibles uniquement si sélectionné */}
+          {selected && (<>
+            {canSwapLeft && (
+              <g onClick={e => { e.stopPropagation(); onSwapLeft(); }} style={{cursor:'pointer'}}>
+                <rect x={x+1} y={cy-arrowH/2} width={arrowW} height={arrowH}
+                  rx={2} fill="#1a56cc" opacity={0.85}/>
+                <text x={x+1+arrowW/2} y={cy+3.5} textAnchor="middle"
+                  fontSize={9} fill="white" fontFamily="monospace" style={{pointerEvents:'none'}}>◀</text>
+              </g>
+            )}
+            {canSwapRight && (
+              <g onClick={e => { e.stopPropagation(); onSwapRight(); }} style={{cursor:'pointer'}}>
+                <rect x={x+cw-arrowW-1} y={cy-arrowH/2} width={arrowW} height={arrowH}
+                  rx={2} fill="#1a56cc" opacity={0.85}/>
+                <text x={x+cw-arrowW/2-1} y={cy+3.5} textAnchor="middle"
+                  fontSize={9} fill="white" fontFamily="monospace" style={{pointerEvents:'none'}}>▶</text>
+              </g>
+            )}
+          </>)}
 
         </g>
       );
@@ -1720,13 +1759,15 @@
       const [cabs,           setCabs]            = React.useState(() => genCabs(360,'A'));
       const [selLowerId,     setSelLowerId]      = React.useState(null);
       const [selUpperId,     setSelUpperId]      = React.useState(null);
-      const [phase,          setPhase]           = React.useState('layout');
+      const [phase,          setPhase]           = React.useState('measure');
       const [doorStyle,      setDoorStyle]       = React.useState('smooth');
       const [showLeadModal,  setShowLeadModal]   = React.useState(false);
       const [winPos,         setWinPos]          = React.useState(150);
       const [winW,           setWinW]            = React.useState(90);
       const [winIdCounter,   setWinIdCounter]    = React.useState(0);
       const [draggingWin,    setDraggingWin]     = React.useState(null);
+      const [resizingWin,    setResizingWin]     = React.useState(null);
+      const [selectedWinId,  setSelectedWinId]   = React.useState(null);
       const [statusMsg,      setStatusMsg]       = React.useState(null);
       const [canvasW,        setCanvasW]         = React.useState(800);
       const [finishLower,    setFinishLower]     = React.useState(DEFAULT_FINISH);
@@ -1906,13 +1947,26 @@
       };
       const onWinDragStart = (winId, winPosNow, e) =>
         setDraggingWin({id:winId, startCm:getSvgCm(e.clientX), startPos:winPosNow});
-      const onSvgMouseMove = e => {
-        if (!draggingWin) return;
-        const dx = getSvgCm(e.clientX) - draggingWin.startCm;
-        const win = wins.find(w => w.id===draggingWin.id); if (!win) return;
-        setWins(prev => prev.map(w => w.id===draggingWin.id ? {...w, pos:clampWinPos(draggingWin.startPos+dx, w.w)} : w));
+      const onWinResizeStart = (winId, winWNow, e) => {
+        e.stopPropagation();
+        setResizingWin({id:winId, startCm:getSvgCm(e.clientX), startW:winWNow});
       };
-      const onSvgMouseUp = () => setDraggingWin(null);
+      const onSvgMouseMove = e => {
+        if (draggingWin) {
+          const dx = getSvgCm(e.clientX) - draggingWin.startCm;
+          const win = wins.find(w => w.id===draggingWin.id); if (!win) return;
+          setWins(prev => prev.map(w => w.id===draggingWin.id ? {...w, pos:clampWinPos(draggingWin.startPos+dx, w.w)} : w));
+        }
+        if (resizingWin) {
+          const dx = getSvgCm(e.clientX) - resizingWin.startCm;
+          setWins(prev => prev.map(w => {
+            if (w.id !== resizingWin.id) return w;
+            const newW = Math.max(30, Math.min(wallLen - w.pos, Math.round(resizingWin.startW + dx)));
+            return {...w, w: newW};
+          }));
+        }
+      };
+      const onSvgMouseUp = () => { setDraggingWin(null); setResizingWin(null); };
       const clearSel = () => { setSelLowerId(null); setSelUpperId(null); setSelectedColIdx(null); };
 
       const saveDesign = () => {
@@ -2153,9 +2207,9 @@
 
       return (
         <div style={{fontFamily:'Courier New, monospace',background:'#fff',minHeight:'100vh',color:'#222',display:'flex',flexDirection:'column'}}
-          onMouseMove={draggingWin ? onSvgMouseMove : undefined}
-          onMouseUp={draggingWin ? onSvgMouseUp : undefined}
-          onMouseLeave={draggingWin ? onSvgMouseUp : undefined}>
+          onMouseMove={draggingWin || resizingWin ? onSvgMouseMove : undefined}
+          onMouseUp={draggingWin || resizingWin ? onSvgMouseUp : undefined}
+          onMouseLeave={draggingWin || resizingWin ? onSvgMouseUp : undefined}>
 
           {/* Header */}
           <div style={{padding:'10px 20px',borderBottom:'1px solid #e8e8e8',background:'#fff',display:'flex',alignItems:'center',gap:'16px'}}>
@@ -2192,272 +2246,357 @@
             {/* ── Sidebar ── */}
             <div style={{width:'260px',flexShrink:0,background:'#fafafa',borderRight:'1px solid #e8e8e8',padding:'14px',overflowY:'auto',display:'flex',flexDirection:'column'}}>
 
-              <Sec title={T("sec.wallLen")}>
-                <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                  <input type="range" min={180} max={600} step={15} value={wallLen}
-                    onChange={e => { const v=+e.target.value; setWallLen(v); regenCabs(v,colCfg); }}
-                    style={{flex:1}} />
-                  <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold'}}>{wallLen}cm</span>
-                </div>
-              </Sec>
+              {/* ── Indicateur 3 étapes ── */}
+              <div style={{display:'flex',alignItems:'flex-start',marginBottom:'16px',borderBottom:'2px solid #e8e8e8',paddingBottom:'12px'}}>
+                {[
+                  { key:'measure', n:'1', label:'Mesures'      },
+                  { key:'layout',  n:'2', label:'Implantation' },
+                  { key:'finish',  n:'3', label:'Décoration'   },
+                ].map(({key, n, label}, i, arr) => {
+                  const order  = ['measure','layout','finish'];
+                  const cur    = order.indexOf(phase);
+                  const me     = order.indexOf(key);
+                  const active = phase === key;
+                  const done   = cur > me;
+                  const canNav = done; // on peut revenir en arrière
+                  return (
+                    <React.Fragment key={key}>
+                      <div style={{flex:1,textAlign:'center',cursor:canNav?'pointer':'default'}}
+                        onClick={() => canNav && setPhase(key)}>
+                        <div style={{width:'22px',height:'22px',borderRadius:'50%',margin:'0 auto 4px',
+                          display:'flex',alignItems:'center',justifyContent:'center',
+                          fontSize:'11px',fontWeight:'bold',
+                          background: active ? '#222' : done ? '#555' : '#ddd',
+                          color:'#fff'}}>
+                          {done ? '✓' : n}
+                        </div>
+                        <div style={{fontSize:'8px',letterSpacing:'1.2px',textTransform:'uppercase',
+                          color: active ? '#222' : done ? '#555' : '#bbb'}}>
+                          {label}
+                        </div>
+                      </div>
+                      {i < arr.length-1 && (
+                        <div style={{display:'flex',alignItems:'center',paddingBottom:'14px'}}>
+                          <div style={{width:'18px',height:'1px',
+                            background: cur > i ? '#555' : '#ddd'}}/>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
 
-              <Sec title={T("sec.columns")}>
-                <div style={{display:'flex',gap:'4px',marginBottom:'6px'}}>
-                  {['none','A','B','C','D','E'].map(c => (
-                    <Btn key={c} active={colCfg===c} onClick={() => { setColCfg(c); regenCabs(wallLen,c); }}>
-                      {c==='none' ? '∅' : c}
-                    </Btn>
-                  ))}
-                </div>
-                <div style={{fontSize:'11px',color:'#aaa'}}>
-                  {colCfg==='A' && T('col.A')}
-                  {colCfg==='B' && T('col.B')}
-                  {colCfg==='C' && T('col.C')}
-                  {colCfg==='D' && T('col.D')}
-                  {colCfg==='E' && T('col.E')}
-                  {colCfg==='none' && T('col.none')}
-                </div>
-              </Sec>
+              {/* ════════════════════════════════
+                  ÉTAPE 1 — MESURES & COLONNES
+              ════════════════════════════════ */}
+              {phase === 'measure' && (<>
 
-              {colCfg!=='none' && cols.length>0 && (
-                <Sec title={T("sec.colType")}>
-                  {selectedColIdx!==null ? (<>
-                    <div style={{fontSize:'11px',color:'#3366cc',marginBottom:'8px'}}>
-                      {T('sec.colType')} {selectedColIdx+1} — {cols[selectedColIdx]}cm
+                <Sec title={T('sec.wallLen')}>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                    <input type="range" min={180} max={600} step={15} value={wallLen}
+                      onChange={e => { const v=+e.target.value; setWallLen(v); regenCabs(v,colCfg); }}
+                      style={{flex:1}} />
+                    <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold'}}>{wallLen}cm</span>
+                  </div>
+                </Sec>
+
+                {/* Pictos colonnes */}
+                <Sec title={T('sec.columns')}>
+                  {(() => {
+                    const ColPicto = ({ cfg, active, onClick }) => {
+                      const W=58, H=38;
+                      const floorY = H-4;
+                      const cW=13, cTop=2, cH=floorY-cTop;
+                      const cabH=11, wtH=2;
+                      const cabTop = floorY - cabH;
+                      const wtTop  = cabTop - wtH;
+                      const cf = active ? '#fff' : '#888';
+                      const zf = active ? 'rgba(255,255,255,0.15)' : '#e0e0e0';
+                      const wf = active ? '#bbb' : '#aaa';
+                      const ff = active ? '#555' : '#ccc';
+
+                      // Positions et zone par config — E=miroir D, B=miroir C, A=D+E
+                      const configs = {
+                        none: { cols: [],                          zL: 1,        zR: W-1        },
+                        D:    { cols: [0],                         zL: cW,       zR: W-1        },
+                        E:    { cols: [W-cW],                      zL: 1,        zR: W-cW       },
+                        C:    { cols: [0, cW+2],                   zL: cW*2+2,   zR: W-1        },
+                        B:    { cols: [W-cW*2-2, W-cW],            zL: 1,        zR: W-cW*2-2   },
+                        A:    { cols: [0, W-cW],                   zL: cW,       zR: W-cW       },
+                      };
+                      const { cols: colXs, zL, zR } = configs[cfg] || configs.none;
+
+                      return (
+                        <div onClick={onClick} style={{cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:'3px'}}>
+                          <svg width={W} height={H} style={{borderRadius:'3px',display:'block',
+                            background: active ? '#222' : '#f2f2f2',
+                            border: `2px solid ${active ? '#222' : '#ddd'}`,
+                            transition:'all 0.12s'}}>
+                            {/* Sol */}
+                            <rect x={0} y={floorY} width={W} height={H-floorY} fill={ff}/>
+                            {/* Colonnes */}
+                            {colXs.map((cx, i) => (
+                              <rect key={i} x={cx} y={cTop} width={cW} height={cH} rx={1} fill={cf}/>
+                            ))}
+                            {/* Zone meubles + plan de travail */}
+                            {zR > zL && <>
+                              <rect x={zL} y={cabTop} width={zR-zL} height={cabH} fill={zf} rx={0.5}/>
+                              <rect x={zL} y={wtTop}  width={zR-zL} height={wtH}  fill={wf} rx={0.5}/>
+                            </>}
+                          </svg>
+                          <span style={{fontSize:'8px',letterSpacing:'1px',textTransform:'uppercase',
+                            color: active ? '#222' : '#aaa'}}>
+                            {cfg==='none' ? T('col.noneShort') : T('col.'+cfg+'short')}
+                          </span>
+                        </div>
+                      );
+                    };
+                    return (
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'4px'}}>
+                        {['none','A','B','C','D','E'].map(c => (
+                          <ColPicto key={c} cfg={c} active={colCfg===c}
+                            onClick={() => { setColCfg(c); regenCabs(wallLen,c); setSelectedColIdx(null); }}/>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </Sec>
+
+                {/* Fenêtres */}
+                <Sec title={T('sec.windows')}>
+                  {wins.map(w => {
+                    const isSel = selectedWinId === w.id;
+                    return (
+                      <div key={w.id}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+                          fontSize:'12px',marginBottom:'4px',
+                          color: isSel ? '#1a56cc' : '#3366cc',
+                          cursor:'pointer',
+                          padding:'3px 5px',
+                          background: isSel ? '#f0f4ff' : 'transparent',
+                          border: isSel ? '1px solid #c0d0ff' : '1px solid transparent',
+                          borderRadius:'2px'}}
+                          onClick={() => {
+                            if (isSel) { setSelectedWinId(null); }
+                            else { setSelectedWinId(w.id); setWinPos(w.pos); setWinW(w.w); }
+                          }}>
+                          <span>⊞ {w.pos}cm + {w.w}cm</span>
+                          <button onClick={e => { e.stopPropagation(); setWins(p => p.filter(x => x.id!==w.id)); if(isSel) setSelectedWinId(null); }}
+                            style={{background:'none',border:'none',color:'#cc3333',cursor:'pointer',fontSize:'14px',padding:'0 2px',lineHeight:1}}>×</button>
+                        </div>
+                        {isSel && (
+                          <div style={{display:'flex',gap:'6px',marginBottom:'6px',padding:'6px',background:'#f7f9ff',border:'1px solid #dde4ff',borderRadius:'2px'}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:'9px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
+                              <input type="number" value={w.pos}
+                                onChange={e => setWins(p => p.map(x => x.id===w.id ? {...x, pos:+e.target.value} : x))}
+                                onBlur={e => setWins(p => p.map(x => x.id===w.id ? {...x, pos:Math.max(0, Math.min(wallLen-x.w, +e.target.value))} : x))}
+                                style={{width:'100%',background:'#f7f7f7',border:'1px solid #ccc',color:'#222',padding:'3px 6px',fontSize:'10px',fontFamily:'Courier New,monospace'}}/>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:'9px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
+                              <input type="number" value={w.w}
+                                onChange={e => setWins(p => p.map(x => x.id===w.id ? {...x, w:+e.target.value} : x))}
+                                onBlur={e => setWins(p => p.map(x => x.id===w.id ? {...x, w:Math.max(30, Math.min(wallLen-x.pos, +e.target.value))} : x))}
+                                style={{width:'100%',background:'#f7f7f7',border:'1px solid #ccc',color:'#222',padding:'3px 6px',fontSize:'10px',fontFamily:'Courier New,monospace'}}/>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div style={{fontSize:'10px',color:'#bbb',marginBottom:'6px'}}>{T('win.drag')}</div>
+                  <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
+                      <input type="number" value={winPos}
+                        onChange={e => setWinPos(+e.target.value)}
+                        onBlur={e => setWinPos(Math.max(0, Math.min(wallLen-winW, +e.target.value)))} />
                     </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
+                      <input type="number" value={winW}
+                        onChange={e => setWinW(+e.target.value)}
+                        onBlur={e => setWinW(Math.max(30, Math.min(wallLen-winPos, +e.target.value)))} />
+                    </div>
+                  </div>
+                  <Btn onClick={addWin} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
+                </Sec>
+
+              </>)}
+
+              {/* ════════════════════════════════
+                  ÉTAPE 2 — IMPLANTATION
+              ════════════════════════════════ */}
+              {phase === 'layout' && (<>
+
+                {/* Type de colonne fixe */}
+                {selectedColIdx!==null && colCfg!=='none' && cols.length>0 && (
+                  <Sec title={`Col.${selectedColIdx+1} — ${cols[selectedColIdx]}cm`}>
                     <div style={{display:'flex',flexDirection:'column',gap:'3px',marginBottom:'8px'}}>
                       {COL_TYPES.map(t => {
-                        // frigo_libre uniquement pour colonne d'extrémité du linéaire
-                        // A: col0=gauche extrémité, col1=droite extrémité
-                        // B: col0=intérieure, col1=droite extrémité
-                        // C: col0=gauche extrémité, col1=intérieure
-                        // D: col0=gauche extrémité (seule)
-                        // E: col0=droite extrémité (seule)
-                        const isLeftExtreme  = (colCfg==='A' && selectedColIdx===0)
-                                            || (colCfg==='C' && selectedColIdx===0)
-                                            || colCfg==='D';
-                        const isRightExtreme = (colCfg==='A' && selectedColIdx===cols.length-1)
-                                            || (colCfg==='B' && selectedColIdx===cols.length-1)
-                                            || colCfg==='E';
-                        const isExtreme = isLeftExtreme || isRightExtreme;
-                        const disabled  = t.id==='frigo_libre' && !isExtreme;
+                        const isLeftExtreme  = (colCfg==='A' && selectedColIdx===0)||(colCfg==='C' && selectedColIdx===0)||colCfg==='D';
+                        const isRightExtreme = (colCfg==='A' && selectedColIdx===cols.length-1)||(colCfg==='B' && selectedColIdx===cols.length-1)||colCfg==='E';
+                        const disabled = t.id==='frigo_libre' && !(isLeftExtreme||isRightExtreme);
                         return (
-                        <Btn key={t.id} active={(colTypes[selectedColIdx]||'colonne')===t.id}
-                          disabled={disabled}
-                          title={disabled ? T('err.notExtreme') : ''}
-                          onClick={() => !disabled && setColTypes(prev => { const a=[...prev]; a[selectedColIdx]=t.id; return a; })}
-                          style={{textAlign:'left',fontSize:'11px'}}>
-                          {t.id==='colonne'?'◼ ':t.id==='frigo'?'❄ ':'🔥 '}{t.label}
-                        </Btn>
+                          <Btn key={t.id} active={(colTypes[selectedColIdx]||'colonne')===t.id}
+                            disabled={disabled} title={disabled?T('err.notExtreme'):''}
+                            onClick={() => !disabled && setColTypes(prev => { const a=[...prev]; a[selectedColIdx]=t.id; return a; })}
+                            style={{textAlign:'left',fontSize:'11px'}}>
+                            {t.id==='colonne'?'◼ ':t.id==='frigo'?'❄ ':'🔥 '}{t.label}
+                          </Btn>
                         );
                       })}
                     </div>
                     {hasColFour && <div style={{fontSize:'10px',color:'#c87000',padding:'5px 6px',border:'1px solid #f0c060',background:'#fffbf0',borderRadius:'2px',marginBottom:'6px'}}>{T('pan.fourDisabled')}</div>}
                     <Btn onClick={() => setSelectedColIdx(null)} style={{fontSize:'8px',width:'100%',textAlign:'center'}}>{T('btn.back')}</Btn>
-                  </>) : (
-                    <div style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
-                      {cols.map((cx,i) => (
-                        <Btn key={i} onClick={() => { setSelectedColIdx(i); clearSel(); }} style={{fontSize:'9px'}}>
-                          {T('sec.colType').split(' ')[0]}.{i+1} {colTypes[i]==='frigo'?'❄':colTypes[i]==='four'?'🔥':'◼'}
-                        </Btn>
-                      ))}
-                    </div>
-                  )}
-                </Sec>
-              )}
-
-              <Sec title={T("sec.windows")}>
-                {wins.map(w => (
-                  <div key={w.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:'12px',color:'#3366cc',marginBottom:'6px'}}>
-                    <span>⊞ {w.pos}cm + {w.w}cm</span>
-                    <button onClick={() => setWins(p => p.filter(x => x.id!==w.id))}
-                      style={{background:'none',border:'none',color:'#cc3333',cursor:'pointer',fontSize:'14px',padding:'0 2px',lineHeight:1}}>×</button>
-                  </div>
-                ))}
-                <div style={{fontSize:'10px',color:'#bbb',marginBottom:'6px'}}>{T('win.drag')}</div>
-                <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>{T('win.position').toUpperCase()}</div>
-                    <input type="number" value={winPos}
-                      onChange={e => setWinPos(Math.max(0, Math.min(wallLen-winW, +e.target.value)))} />
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>{T('pan.width').toUpperCase()}</div>
-                    <input type="number" value={winW}
-                      onChange={e => setWinW(Math.max(30, Math.min(wallLen-winPos, +e.target.value)))} />
-                  </div>
-                </div>
-                <Btn onClick={addWin} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
-              </Sec>
-
-              {selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
-                const ec = extraCols.find(c=>c.id===selectedExtraColId);
-                return (
-                  <Sec title={`${T('sec.extraCol')} · ${ec.w}cm`}>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.width').toUpperCase()}</div>
-                    <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
-                      {[30,45,60].map(sz => (
-                        <Btn key={sz} active={ec.w===sz}
-                          onClick={() => {
-                            const oldW = ec.w;
-                            const diff = sz - oldW;
-                            // Mettre à jour la largeur de la colonne
-                            setExtraCols(prev => prev.map(c => c.id===ec.id
-                              ? {...c, w:sz, colType: c.colType==='four' && sz!==60 ? 'colonne' : c.colType}
-                              : c));
-                            // Reflow des meubles bas/haut : absorber la différence sur le meuble adjacent
-                            if (diff !== 0) {
-                              setCabs(prev => {
-                                const sorted = [...prev].sort((a,b)=>a.x-b.x);
-                                // Trouver le meuble adjacent à droite ou gauche de la colonne
-                                const colRight = ec.x + oldW;
-                                const colLeft  = ec.x;
-                                // Adjacent à droite (colonne à gauche du meuble)
-                                let adjIdx = sorted.findIndex(c => Math.abs(c.x - colRight) < 2);
-                                if (adjIdx >= 0) {
-                                  const adj = sorted[adjIdx];
-                                  const newW = adj.w - diff;
-                                  if (newW >= 20) {
-                                    sorted[adjIdx] = {...adj, x: adj.x + diff, w: newW};
-                                  }
-                                } else {
-                                  // Adjacent à gauche (colonne à droite du meuble)
-                                  adjIdx = sorted.findIndex(c => Math.abs((c.x + c.w) - colLeft) < 2);
-                                  if (adjIdx >= 0) {
-                                    const adj = sorted[adjIdx];
-                                    const newW = adj.w - diff;
-                                    if (newW >= 20) sorted[adjIdx] = {...adj, w: newW};
-                                  }
-                                }
-                                return sorted;
-                              });
-                            }
-                          }}>
-                          {sz}cm
-                        </Btn>
-                      ))}
-                    </div>
-                    <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.type').toUpperCase()}</div>
-                    <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
-                      <Btn active={ec.colType!=='four'}
-                        onClick={() => setExtraCols(prev => prev.map(c => c.id===ec.id ? {...c, colType:'colonne'} : c))}>
-                        {T('pan.storage')}
-                      </Btn>
-                      <Btn active={ec.colType==='four'} disabled={ec.w!==60}
-                        title={ec.w!==60 ? T('err.needs60') : ''}
-                        onClick={() => ec.w===60 && setExtraCols(prev => prev.map(c => c.id===ec.id ? {...c, colType:'four'} : c))}>
-                        {T('pan.oven')} {ec.w!==60 ? '⊘' : ''}
-                      </Btn>
-                    </div>
-                    <Btn style={{width:'100%',textAlign:'center'}}
-                      onClick={() => {
-                        setExtraCols(prev => prev.filter(c => c.id !== ec.id));
-                        setCabs(prev => {
-                          const newCab = {id: Date.now(), x: ec.x, w: ec.w, lowerType:'rangement', upperMode:'upper', upperType:'rangement', hoodW:60};
-                          return [...prev, newCab].sort((a,b)=>a.x-b.x);
-                        });
-                        setSelectedExtraColId(null);
-                      }}>
-                      🗑 Supprimer la colonne
-                    </Btn>
                   </Sec>
-                );
-              })() : selUpperId!==null ? <UpperPanel /> : <LowerPanel />}
+                )}
 
+                {selectedColIdx===null && (selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
+                  const ec = extraCols.find(c=>c.id===selectedExtraColId);
+                  return (
+                    <Sec title={`${T('sec.extraCol')} · ${ec.w}cm`}>
+                      <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.width').toUpperCase()}</div>
+                      <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
+                        {[30,45,60].map(sz => (
+                          <Btn key={sz} active={ec.w===sz}
+                            onClick={() => {
+                              const oldW = ec.w, diff = sz - oldW;
+                              setExtraCols(prev => prev.map(c => c.id===ec.id
+                                ? {...c, w:sz, colType: c.colType==='four' && sz!==60 ? 'colonne' : c.colType}
+                                : c));
+                              if (diff !== 0) {
+                                setCabs(prev => {
+                                  const sorted = [...prev].sort((a,b)=>a.x-b.x);
+                                  const colRight = ec.x + oldW, colLeft = ec.x;
+                                  let adjIdx = sorted.findIndex(c => Math.abs(c.x - colRight) < 2);
+                                  if (adjIdx >= 0) {
+                                    const adj = sorted[adjIdx], newW = adj.w - diff;
+                                    if (newW >= 20) sorted[adjIdx] = {...adj, x: adj.x + diff, w: newW};
+                                  } else {
+                                    adjIdx = sorted.findIndex(c => Math.abs((c.x + c.w) - colLeft) < 2);
+                                    if (adjIdx >= 0) {
+                                      const adj = sorted[adjIdx], newW = adj.w - diff;
+                                      if (newW >= 20) sorted[adjIdx] = {...adj, w: newW};
+                                    }
+                                  }
+                                  return sorted;
+                                });
+                              }
+                            }}>
+                            {sz}cm
+                          </Btn>
+                        ))}
+                      </div>
+                      <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.type').toUpperCase()}</div>
+                      <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
+                        <Btn active={ec.colType!=='four'}
+                          onClick={() => setExtraCols(prev => prev.map(c => c.id===ec.id ? {...c, colType:'colonne'} : c))}>
+                          {T('pan.storage')}
+                        </Btn>
+                        <Btn active={ec.colType==='four'} disabled={ec.w!==60}
+                          title={ec.w!==60 ? T('err.needs60') : ''}
+                          onClick={() => ec.w===60 && setExtraCols(prev => prev.map(c => c.id===ec.id ? {...c, colType:'four'} : c))}>
+                          {T('pan.oven')} {ec.w!==60 ? '⊘' : ''}
+                        </Btn>
+                      </div>
+                      <Btn style={{width:'100%',textAlign:'center'}}
+                        onClick={() => {
+                          setExtraCols(prev => prev.filter(c => c.id !== ec.id));
+                          setCabs(prev => {
+                            const newCab = {id: Date.now(), x: ec.x, w: ec.w, lowerType:'rangement', upperMode:'upper', upperType:'rangement', hoodW:60};
+                            return [...prev, newCab].sort((a,b)=>a.x-b.x);
+                          });
+                          setSelectedExtraColId(null);
+                        }}>
+                        🗑 {T('pan.deleteCol')}
+                      </Btn>
+                    </Sec>
+                  );
+                })() : selUpperId!==null ? <UpperPanel /> : <LowerPanel />)}
 
+              </>)}
 
-              {/* ── Budget estimatif ── */}
-              {cabs.length > 0 && (() => {
-                const hasFrigoLibre = colTypes.some(t => t==='frigo_libre') || extraCols.some(ec => ec.colType==='frigo_libre');
-                const needsElec = hasFrigoLibre || hasLV || hasLl;
-                return (
-                <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8',borderRadius:'2px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'10px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
-                    {T('sec.budget')}
+              {/* ════════════════════════════════
+                  ÉTAPE 3 — DÉCORATION
+              ════════════════════════════════ */}
+              {phase === 'finish' && (<>
+
+                <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'12px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
+                    {T('sec.finishes')}
                   </div>
-                  {[
-                    [T('bud.lower'),   fmt(price.lower, locale),  null],
-                    [T('bud.upper'),   fmt(price.upper, locale),  null],
-                    price.cols > 0 ? [T('bud.cols'), fmt(price.cols, locale), null] : null,
-                    [T('bud.worktop'), fmt(price.worktop, locale), null],
-                  ].filter(Boolean).map(([label, lo, hi]) => (
-                    <div key={label} style={{display:'flex',justifyContent:'space-between',fontSize:'10px',marginBottom:'4px',color:'#555'}}>
-                      <span>{label}</span>
-                      <span style={{fontWeight:'500',color:'#333'}}>
-                        {hi ? `${lo} – ${hi}` : lo}
-                      </span>
-                    </div>
-                  ))}
-                  <div style={{borderTop:'1px solid #ddd',marginTop:'8px',paddingTop:'8px',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-                    <span style={{fontSize:'9px',letterSpacing:'1px',color:'#888',textTransform:'uppercase'}}>{T('bud.totalHT')}</span>
-                    <span style={{fontSize:'13px',fontWeight:'bold',color:'#111',letterSpacing:'-0.5px'}}>
-                    {fmt(price.total, locale)}
-                    </span>
-                  </div>
-                  <div style={{fontSize:'8.5px',color:'#bbb',marginTop:'5px',lineHeight:'1.5'}}>
-                    {T('bud.delivery')}
-                  </div>
-                  {needsElec && (
-                    <div style={{fontSize:'8.5px',color:'#c07000',marginTop:'4px',lineHeight:'1.5',borderTop:'1px solid #f0e0c0',paddingTop:'4px'}}>
-                      {T('bud.elec')}{hasFrigoLibre ? ' ('+T('col.frigo_libre').split(' ')[0]+')' : ''}{hasLV ? ' ('+T('lower.lv')+')' : ''}{hasLl ? ' ('+T('lower.ll')+')' : ''}
-                    </div>
-                  )}
+                  <FinishPicker label={T('bud.lower')} T={T} finish={finishLower} onSelect={setFinishLower} customColor={customColorLow} onCustomColor={setCustomColorLow}/>
+                  <FinishPicker label={T('bud.upper')} T={T} finish={finishUpper} onSelect={setFinishUpper} customColor={customColorUp} onCustomColor={setCustomColorUp}/>
+                  <FinishPicker label={T('bud.cols')}  T={T} finish={finishCol}   onSelect={setFinishCol}   customColor={customColorCol} onCustomColor={setCustomColorCol}/>
                 </div>
-                );
-              })()}
 
-              {/* ── Finitions ── */}
-              <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8'}}>
-                <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'12px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
-                  {T('sec.finishes')}
-                </div>
-                <FinishPicker
-                  label={T('bud.lower')} T={T}
-                  finish={finishLower}
-                  onSelect={setFinishLower}
-                  customColor={customColorLow}
-                  onCustomColor={setCustomColorLow}
-                />
-                <FinishPicker
-                  label={T('bud.upper')} T={T}
-                  finish={finishUpper}
-                  onSelect={setFinishUpper}
-                  customColor={customColorUp}
-                  onCustomColor={setCustomColorUp}
-                />
-                <FinishPicker
-                  label={T('bud.cols')} T={T}
-                  finish={finishCol}
-                  onSelect={setFinishCol}
-                  customColor={customColorCol}
-                  onCustomColor={setCustomColorCol}
-                />
-              </div>
+                {(cabs.length > 0 || extraCols.length > 0 || colCfg !== 'none') && (() => {
+                  const hasFrigoLibre = colTypes.some(t=>t==='frigo_libre')||extraCols.some(ec=>ec.colType==='frigo_libre');
+                  const needsElec = hasFrigoLibre || hasLV || hasLl;
+                  return (
+                    <div style={{marginBottom:'14px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8',borderRadius:'2px'}}>
+                      <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'10px',textTransform:'uppercase',borderBottom:'1px solid #e8e8e8',paddingBottom:'6px'}}>
+                        {T('sec.budget')}
+                      </div>
+                      {[
+                        [T('bud.lower'), fmt(price.lower, locale), null],
+                        [T('bud.upper'), fmt(price.upper, locale), null],
+                        price.cols > 0 ? [T('bud.cols'), fmt(price.cols, locale), null] : null,
+                        [T('bud.worktop'), fmt(price.worktop, locale), null],
+                      ].filter(Boolean).map(([label, lo, hi]) => (
+                        <div key={label} style={{display:'flex',justifyContent:'space-between',fontSize:'10px',marginBottom:'4px',color:'#555'}}>
+                          <span>{label}</span>
+                          <span style={{fontWeight:'500',color:'#333'}}>{hi ? `${lo} – ${hi}` : lo}</span>
+                        </div>
+                      ))}
+                      <div style={{borderTop:'1px solid #ddd',marginTop:'8px',paddingTop:'8px',display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+                        <span style={{fontSize:'9px',letterSpacing:'1px',color:'#888',textTransform:'uppercase'}}>{T('bud.totalHT')}</span>
+                        <span style={{fontSize:'13px',fontWeight:'bold',color:'#111',letterSpacing:'-0.5px'}}>{fmt(price.total, locale)}</span>
+                      </div>
+                      <div style={{fontSize:'8.5px',color:'#bbb',marginTop:'5px',lineHeight:'1.5'}}>{T('bud.delivery')}</div>
+                      {needsElec && (
+                        <div style={{fontSize:'8.5px',color:'#c07000',marginTop:'4px',lineHeight:'1.5',borderTop:'1px solid #f0e0c0',paddingTop:'4px'}}>
+                          {T('bud.elec')}{hasFrigoLibre?' ('+T('col.frigo_libre').split(' ')[0]+')':''}{hasLV?' ('+T('lower.lv')+')':''}{hasLl?' ('+T('lower.ll')+')':''}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
+              </>)}
+
+              {/* ── Bouton de progression en bas ── */}
               <div style={{marginTop:'auto',paddingTop:'10px',borderTop:'1px solid #e8e8e8'}}>
-                {phase==='layout' ? (
-                  <Btn onClick={() => setPhase('finish')} style={{width:'100%',padding:'10px',textAlign:'center',letterSpacing:'1px',fontSize:'9px'}}>
+                {phase === 'measure' && (
+                  <Btn onClick={() => setPhase('layout')} style={{width:'100%',padding:'12px',textAlign:'center',letterSpacing:'1px',fontSize:'10px',background:'#222',color:'#fff',border:'1px solid #222'}}>
+                    J'IMPLANTE MES MEUBLES →
+                  </Btn>
+                )}
+                {phase === 'layout' && (
+                  <Btn onClick={() => setPhase('finish')} style={{width:'100%',padding:'12px',textAlign:'center',letterSpacing:'1px',fontSize:'10px',background:'#222',color:'#fff',border:'1px solid #222'}}>
                     {T('act.validate')}
                   </Btn>
-                ) : (<>
+                )}
+                {phase === 'finish' && (<>
                   <div style={{fontSize:'10px',color:'#999',marginBottom:'8px',letterSpacing:'2px'}}>{T('sec.doorStyle').toUpperCase()}</div>
                   <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
                     <Btn active={doorStyle==='smooth'} onClick={() => setDoorStyle('smooth')}>{T('door.smooth')}</Btn>
                     <Btn active={doorStyle==='frame'}  onClick={() => setDoorStyle('frame')}>{T('door.frame')}</Btn>
                   </div>
                   <div style={{display:'flex',gap:'4px',marginBottom:'8px'}}>
-                    <Btn onClick={saveDesign}  style={{flex:1,textAlign:'center',fontSize:'11px'}}> 💾</Btn>
-                    <Btn onClick={loadDesign}  style={{flex:1,textAlign:'center',fontSize:'11px'}}> 📂</Btn>
-                    <Btn onClick={exportToPng} style={{flex:1,textAlign:'center',fontSize:'11px'}}> 📷 PNG</Btn>
+                    <Btn onClick={saveDesign}  style={{flex:1,textAlign:'center',fontSize:'11px'}}>💾</Btn>
+                    <Btn onClick={loadDesign}  style={{flex:1,textAlign:'center',fontSize:'11px'}}>📂</Btn>
+                    <Btn onClick={exportToPng} style={{flex:1,textAlign:'center',fontSize:'11px'}}>📷 PNG</Btn>
                   </div>
-                  <button
-                    onClick={() => setShowLeadModal(true)}
-                    style={{width:'100%',padding:'10px',background:'#222',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Courier New,monospace',fontSize:'10px',letterSpacing:'2px',marginBottom:'6px',textAlign:'center'}}>
+                  <button onClick={() => setShowLeadModal(true)}
+                    style={{width:'100%',padding:'12px',background:'#222',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Courier New,monospace',fontSize:'10px',letterSpacing:'2px',textAlign:'center'}}>
                     {T('act.sendQuote')}
                   </button>
-                  <Btn onClick={() => setPhase('layout')} style={{width:'100%',textAlign:'center',fontSize:'9px'}}>{T('act.modify')}</Btn>
                 </>)}
               </div>
+
             </div>
 
             {/* ── Canvas SVG ── */}
@@ -2519,19 +2658,27 @@
                     return (
                       <g key={ec.id} onClick={e => { e.stopPropagation(); setSelectedExtraColId(prev => prev===ec.id ? null : ec.id); setSelLowerId(null); setSelUpperId(null); setSelectedColIdx(null); }} style={{cursor:'pointer'}}>
                         <defs><clipPath id={clipId}><rect x={x} y={y} width={w} height={h}/></clipPath></defs>
-                        <rect x={x} y={y} width={w} height={h} fill="#e8e8e8"
+                        <rect x={x} y={y} width={w} height={h} fill={getFacadeFill(finishCol)}
                           stroke={isSel ? '#1a56cc' : '#333'} strokeWidth={isSel ? 2 : 1.5}/>
                         <rect x={x} y={plinthY} width={w} height={C.PLINTH_H}
-                          fill="#e8e8e8" stroke="#555" strokeWidth={0.8}/>
+                          fill={getFacadeFill(finishCol)} stroke="#555" strokeWidth={0.8}/>
                         {ec.colType==='four' && ec.w===60
                           ? <InlineFourColonne x={x} y={y} w={w} h={h}/>
-                          : <InlineFrigo x={x} y={y} w={w} h={h}/>}
+                          : ec.colType==='frigo' || ec.colType==='frigo_libre'
+                          ? <InlineFrigo x={x} y={y} w={w} h={h}/>
+                          : <InlineColonne x={x} y={y} w={w} h={h}/>}
                       </g>
                     );
                   })}</g>
 
                   {/* Fenêtres */}
-                  <g>{wins.map(w => <WinSvg key={w.id} win={w} onDragStart={onWinDragStart} isDragging={draggingWin?.id===w.id} />)}</g>
+                  <g>{wins.map(w => <WinSvg key={w.id} win={w}
+                    onDragStart={onWinDragStart}
+                    onResizeStart={onWinResizeStart}
+                    onSelect={id => setSelectedWinId(prev => prev===id ? null : id)}
+                    isDragging={draggingWin?.id===w.id}
+                    isResizing={resizingWin?.id===w.id}
+                    isSelected={selectedWinId===w.id} />)}</g>
 
                   {/* Colonnes */}
                   <g>{cols.map((cx,i) => {
@@ -2549,9 +2696,16 @@
                     onSelect={() => { setSelUpperId(prev=>prev===c.id?null:c.id); setSelLowerId(null); setSelectedColIdx(null); setSelectedExtraColId(null); }} />)}</g>
 
                   {/* Meubles bas */}
-                  <g>{cabs.map(c => <LowerSvg key={c.id} cab={c} selected={selLowerId===c.id}
-                    onSelect={() => { setSelLowerId(prev=>prev===c.id?null:c.id); setSelUpperId(null); setSelectedColIdx(null); setSelectedExtraColId(null); }}
-                    doorStyle={doorStyle} facadeFill={getFacadeFill(finishLower)} />)}</g>
+                  <g>{cabs.map((c, idx) => {
+                    const isLowerSel = selLowerId===c.id;
+                    return <LowerSvg key={c.id} cab={c} selected={isLowerSel}
+                      onSelect={() => { setSelLowerId(prev=>prev===c.id?null:c.id); setSelUpperId(null); setSelectedColIdx(null); setSelectedExtraColId(null); }}
+                      doorStyle={doorStyle} facadeFill={getFacadeFill(finishLower)}
+                      canSwapLeft={isLowerSel && idx > 0}
+                      canSwapRight={isLowerSel && idx < cabs.length-1}
+                      onSwapLeft={() => swapCab(c.id, -1)}
+                      onSwapRight={() => swapCab(c.id, +1)} />;
+                  })}</g>
 
                   {/* Plinthe — passe unique sur toute la rangée */}
                   {(() => {
@@ -2586,50 +2740,6 @@
                   </g>
                 </svg>
               </div>
-
-              {/* Boutons swap — centrés sous le dessin, visibles si meuble bas sélectionné */}
-              {selLowerId !== null && (() => {
-                const idx = cabs.findIndex(c => c.id === selLowerId);
-                const canLeft  = idx > 0;
-                const canRight = idx < cabs.length - 1;
-                const cab = cabs[idx];
-                return (
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginTop:'14px',width:'100%'}}>
-                    <button
-                      onClick={e => { e.stopPropagation(); swapCab(selLowerId, -1); }}
-                      disabled={!canLeft}
-                      title="Déplacer à gauche"
-                      style={{padding:'7px 22px',fontSize:'16px',fontFamily:'Courier New,monospace',
-                        cursor:canLeft?'pointer':'not-allowed',
-                        background:canLeft?'#222':'#e8e8e8',
-                        color:canLeft?'#fff':'#ccc',
-                        border:'1px solid '+(canLeft?'#222':'#ddd'),
-                        borderRadius:'2px',lineHeight:1,transition:'all 0.12s'}}>
-                      ◀
-                    </button>
-                    <div style={{textAlign:'center',fontFamily:'Courier New,monospace'}}>
-                      <div style={{fontSize:'10px',color:'#888',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'2px'}}>
-                        {cab ? T('lower.'+cab.lowerType) : ''}
-                      </div>
-                      <div style={{fontSize:'9px',color:'#bbb',letterSpacing:'1px'}}>
-                        {idx+1} / {cabs.length} · {cab ? cab.w+'cm' : ''}
-                      </div>
-                    </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); swapCab(selLowerId, +1); }}
-                      disabled={!canRight}
-                      title="Déplacer à droite"
-                      style={{padding:'7px 22px',fontSize:'16px',fontFamily:'Courier New,monospace',
-                        cursor:canRight?'pointer':'not-allowed',
-                        background:canRight?'#222':'#e8e8e8',
-                        color:canRight?'#fff':'#ccc',
-                        border:'1px solid '+(canRight?'#222':'#ddd'),
-                        borderRadius:'2px',lineHeight:1,transition:'all 0.12s'}}>
-                      ▶
-                    </button>
-                  </div>
-                );
-              })()}
 
               {/* Légende */}
               <div style={{display:'flex',gap:'16px',marginTop:'12px',fontSize:'11px',color:'#999',flexWrap:'wrap'}}>
