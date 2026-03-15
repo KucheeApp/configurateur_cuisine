@@ -744,10 +744,11 @@
 
     const finishCoeff = (finish) => FINISH_COEFF[finish?.category] ?? 1.00;
 
-    const calcPrice = ({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol }) => {
+    const calcPrice = ({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle }) => {
       const cLow = finishCoeff(finishLower);
       const cUp  = finishCoeff(finishUpper);
       const cCol = finishCoeff(finishCol);
+      const cDoor = doorStyle === 'frame' ? 1.17 : 1.00;
       let lower = 0, upper = 0, cols = 0;
       cabs.forEach(function(c) {
         const lTable = PRICING.lower[c.lowerType] || PRICING.lower.rangement;
@@ -768,9 +769,9 @@
         const tbl = PRICING.col[ec.colType] || PRICING.col.colonne;
         cols += priceLookup(tbl, ec.w || C.COL_W);
       });
-      lower = Math.round(lower * cLow);
-      upper = Math.round(upper * cUp);
-      cols  = Math.round(cols  * cCol);
+      lower = Math.round(lower * cLow * cDoor);
+      upper = Math.round(upper * cUp  * cDoor);
+      cols  = Math.round(cols  * cCol * cDoor);
       const totalLowerW = cabs.reduce((s, c) => s + c.w, 0) / 100;
       const worktop = Math.round(totalLowerW * PRICING.worktop.low);
       const subtotal = lower + upper + cols;
@@ -2202,7 +2203,7 @@
       };
 
       // ── Rendu principal ───────────────────────────────────────────────
-      const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol });
+      const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle });
       const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol, T, locale });
 
       return (
