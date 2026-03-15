@@ -67,13 +67,30 @@
     const COL_TOP_Y = svgY(C.COL_H);
 
     // ====== DONNÉES ======
+    // Types évier regroupés pour la logique unicité/plaque
+    const EVIER_TYPES = ['evier', 'evier_1p', 'evier_2p'];
+
     const LOWER_TYPES = [
-      { id: 'rangement',   label: 'Rangement (portes)',  widths: null,     noColFour: false },
-      { id: 'tiroirs',     label: 'Tiroirs',              widths: null,     noColFour: false },
-      { id: 'evier',       label: 'Sous évier',           widths: null,     noColFour: false, unique: true },
-      { id: 'lv',          label: 'Lave-vaisselle',       widths: [45, 60], noColFour: false, unique: true },
-      { id: 'four',        label: 'Four encastré',        widths: [60],     noColFour: true  },
-      { id: 'll',          label: 'Lave-linge',            widths: [60],     noColFour: false, unique: true },
+      // ── A : 1 porte ──────────────────────────────────────────────
+      { id: 'rangement',       label: 'Rangement 1 porte',    widths: null,                   noColFour: false, group: 'A · 1 porte' },
+      { id: 'bouteille',       label: 'Rangement bouteilles', widths: null,                   noColFour: false, maxCount: 4, group: 'A · 1 porte' },
+      { id: 'evier_1p',        label: 'Évier 1 porte',        widths: [45, 60],               noColFour: false, unique: true, group: 'A · 1 porte' },
+      // ── B : 2 portes ─────────────────────────────────────────────
+      { id: 'rangement_2p',    label: 'Rangement 2 portes',   widths: [80, 90],               noColFour: false, group: 'B · 2 portes' },
+      { id: 'evier_2p',        label: 'Évier 2 portes',       widths: [80, 90],               noColFour: false, unique: true, group: 'B · 2 portes' },
+      // ── C : coulissant 4 tiroirs ─────────────────────────────────
+      { id: 'coulissant_4t',   label: 'Coulissant 4 tiroirs', widths: [30, 45, 60],           noColFour: false, group: 'C · 4 coulissants' },
+      // ── D : 2 tiroirs + 1 coffre ─────────────────────────────────
+      { id: 'coulissant_2t1c', label: '2 tiroirs + coffre',   widths: [45, 60, 75, 90],       noColFour: false, group: 'D · 2T + coffre' },
+      // ── E : 2 coffres ────────────────────────────────────────────
+      { id: 'coulissant_2c',   label: '2 coffres coulissants',widths: [45, 60, 75, 90],       noColFour: false, group: 'E · 2 coffres' },
+      // ── F : bas four ─────────────────────────────────────────────
+      { id: 'four',            label: 'Bas four',              widths: [60],                   noColFour: true,  group: 'F · Bas four' },
+      // ── Équipements ──────────────────────────────────────────────
+      { id: 'lv',              label: 'Lave-vaisselle',        widths: [45, 60],               noColFour: false, unique: true, group: 'Équipements' },
+      { id: 'll',              label: 'Lave-linge',            widths: [60],                   noColFour: false, unique: true, group: 'Équipements' },
+      // ── Legacy (rétrocompatibilité designs sauvegardés) ──────────
+      { id: 'evier', label: 'Sous-évier', widths: null, noColFour: false, unique: true, group: 'Legacy', hidden: true },
     ];
     const UPPER_TYPES = [
       { id: 'rangement', label: 'Rangement fermé'   },
@@ -220,7 +237,14 @@
     // ====== GRILLE TARIFAIRE ======
     const PRICING = {
       lower: {
-        rangement:   { 45:143, 60:159, 90:221 },
+        rangement:       { 45:143, 60:159, 90:221 },
+        bouteille:       { 15:68,  30:98           },
+        evier_1p:        { 45:152, 60:167          },
+        rangement_2p:    { 80:195, 90:221          },
+        evier_2p:        { 80:205, 90:232          },
+        coulissant_4t:   { 30:340, 45:398, 60:429 },
+        coulissant_2t1c: { 45:420, 60:465, 75:498, 90:530 },
+        coulissant_2c:   { 45:398, 60:440, 75:472, 90:510 },
         tiroirs:     { 45:398, 60:429, 90:484 },
         evier:       { 45:152, 60:167, 90:226 },
         lv:          { 45:77,  60:83  },
@@ -539,7 +563,7 @@
       const x = cab.x + C.MARGIN, y = svgY(C.LOWER_H);
       const cw = cab.w;
       const h  = C.LOWER_H - C.PLINTH_H; // 75 — corps sans plinthe
-      const isInvalid = cw < 30;
+      const isInvalid = cab.lowerType === 'bouteille' ? cw < 15 : cw < 30;
       const ctY = svgY(C.LOWER_H + C.COUNTER_H);
       const cx  = x + cw / 2;
 
@@ -552,16 +576,16 @@
             stroke={isInvalid ? '#cc3333' : selected ? '#1a56cc' : '#333'}
             strokeWidth={selected ? 2 : 1} />
 
-          {/* ── RANGEMENT ── */}
-          {(cab.lowerType==='rangement' || !cab.lowerType || cab.lowerType==='') && !isInvalid && (() => {
-            const twoD = cw > 60;
+          {/* ── RANGEMENT 1P + ÉVIER 1P (même visuel) ── */}
+          {(cab.lowerType==='rangement' || cab.lowerType==='evier_1p' || !cab.lowerType || cab.lowerType==='') && !isInvalid && (() => {
+            const twoD = cab.lowerType==='evier_1p' ? false : cw > 60;
             const py = y+4, ph = h-8;
             if (!twoD) {
               const pw = cw-6, hw = Math.min(cw*0.45, 20);
               return (<>
                 <rect x={x+3} y={py} width={pw} height={ph} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
                 {doorStyle==='frame' && <rect x={x+6} y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>}
-                <rect x={cx-hw/2} y={y+8} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                <rect x={cx-hw/2} y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
               </>);
             } else {
               const sep = x+cw/2, pw = cw/2-5, hw = Math.min(cw/2*0.45, 18);
@@ -573,8 +597,8 @@
                   <rect x={x+6}   y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
                   <rect x={sep+5} y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
                 </>}
-                <rect x={x+cw/4-hw/2}   y={y+8} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
-                <rect x={x+3*cw/4-hw/2} y={y+8} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                <rect x={x+cw/4-hw/2}   y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                <rect x={x+3*cw/4-hw/2} y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
               </>);
             }
           })()}
@@ -601,7 +625,7 @@
               return (<>
                 <rect x={x+3} y={py} width={pw} height={ph} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
                 {doorStyle==='frame' && <rect x={x+6} y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>}
-                <rect x={cx-hw/2} y={y+8} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                <rect x={cx-hw/2} y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
               </>);
             } else {
               const sep = x+cw/2, pw = cw/2-5, hw = Math.min(cw/2*0.45, 18);
@@ -613,12 +637,12 @@
                   <rect x={x+6}   y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
                   <rect x={sep+5} y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
                 </>}
-                <rect x={x+cw/4-hw/2}   y={y+8} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
-                <rect x={x+3*cw/4-hw/2} y={y+8} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                <rect x={x+cw/4-hw/2}   y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                <rect x={x+3*cw/4-hw/2} y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
               </>);
             }
           })()}
-          {cab.lowerType==='evier' && <Mitigeur cx={cx} ctY={ctY} />}
+          {(cab.lowerType==='evier' || cab.lowerType==='evier_1p') && <Mitigeur cx={cx} ctY={ctY} />}
 
           {/* ── FOUR ── */}
           {cab.lowerType==='four' && (() => {
@@ -639,41 +663,68 @@
 
           {/* ── LAVE-VAISSELLE ── */}
           {cab.lowerType==='lv' && (() => {
-            const px=x+3, pw=cw-6, doorY=y+22, doorH=h-28, hw=Math.min(pw*0.45,24), knCx=px+pw-10;
+            const px=x+3, pw=cw-6;
+            const banH = 10;
+            const doorY = y + 3 + banH;
+            const doorH = h - 6 - banH;
+            const hw = Math.min(pw*0.45, 24);
+            const knCx = px + pw - 9;
             return (<>
               <rect x={px} y={y+3} width={pw} height={h-6} rx={1} fill="#f4f4f6" stroke="#555" strokeWidth={0.8}/>
-              <rect x={px} y={y+3} width={pw} height={16} rx={1} fill="#e0e2e8" stroke="#555" strokeWidth={0.6}/>
-              {[px+6,px+14,px+22].map((lx,i) => <circle key={i} cx={lx} cy={y+11} r={2} fill={i===0?'#aaddaa':'#ccc'} stroke="#888" strokeWidth={0.3}/>)}
-              <circle cx={knCx} cy={y+11} r={5} fill="#d0d0d8" stroke="#888" strokeWidth={0.5}/>
-              <circle cx={knCx} cy={y+11} r={2} fill="#aaa"/>
-              <line x1={knCx} y1={y+6} x2={knCx} y2={y+9} stroke="#666" strokeWidth={0.8}/>
-              <rect x={px+1} y={doorY} width={pw-2} height={doorH} rx={0.5} fill="#efefef" stroke="#777" strokeWidth={0.5}/>
-              <rect x={px+4} y={doorY+3} width={pw-8} height={doorH-6} rx={0.5} fill="none" stroke="#ddd" strokeWidth={0.5}/>
+              <rect x={px} y={y+3} width={pw} height={banH} rx={1} fill="#e0e2e8" stroke="#555" strokeWidth={0.6}/>
+              <circle cx={px+7} cy={y+3+banH/2} r={1.8} fill="#aaddaa" stroke="#888" strokeWidth={0.3}/>
+              <circle cx={knCx} cy={y+3+banH/2} r={banH*0.38} fill="#d0d0d8" stroke="#888" strokeWidth={0.5}/>
+              <circle cx={knCx} cy={y+3+banH/2} r={banH*0.15} fill="#aaa"/>
+              <line x1={knCx} y1={y+3} x2={knCx} y2={y+3+banH*0.35} stroke="#666" strokeWidth={0.7}/>
+              <rect x={px+1} y={doorY} width={pw-2} height={doorH} rx={0.5}
+                fill={facadeFill} stroke="#777" strokeWidth={0.5}/>
+              {doorStyle==='frame' && <rect x={px+4} y={doorY+3} width={pw-8} height={doorH-6}
+                rx={0.5} fill="none" stroke="#bbb" strokeWidth={0.4}/>}
               <rect x={cx-hw/2} y={doorY+5} width={hw} height={2} rx={1} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
             </>);
           })()}
 
           {/* ── LAVE-LINGE ── */}
           {cab.lowerType==='ll' && (() => {
-            const px=x+3, pw=cw-6, doorY=y+20, doorH=h-26;
-            const hubCx=cx, hubCy=doorY+doorH/2, hubR=Math.min(pw/2-6, doorH/2-6);
+            const px=x+3, pw=cw-6;
+            const banH = 10;
+            const doorY = y + 3 + banH;
+            const doorH = h - 6 - banH;
+            const hw = Math.min(pw*0.45, 24);
+            const hubCx = cx, hubCy = doorY + doorH/2;
+            const hubR = Math.min(pw/2-8, doorH/2-8);
             const kL=px+8, kR=px+pw-8;
+            // stroke hublot adapté à la finition
+            const hubStroke = (facadeFill && facadeFill.startsWith('url')) ? '#7a5228' : '#888';
             return (<>
+              {/* Corps fond */}
               <rect x={px} y={y+3} width={pw} height={h-6} rx={1} fill="#f4f4f6" stroke="#555" strokeWidth={0.8}/>
-              <rect x={px} y={y+3} width={pw} height={16} rx={1} fill="#e0e2e8" stroke="#555" strokeWidth={0.6}/>
-              <circle cx={kL} cy={y+11} r={5} fill="#d0d0d8" stroke="#888" strokeWidth={0.5}/>
-              <circle cx={kL} cy={y+11} r={2} fill="#aaa"/>
-              <line x1={kL} y1={y+6} x2={kL} y2={y+9} stroke="#666" strokeWidth={0.8}/>
-              <rect x={cx-10} y={y+5} width={20} height={10} rx={0.8} fill="#1a2a1a" stroke="#555" strokeWidth={0.3}/>
-              <text x={cx} y={y+12} textAnchor="middle" fontSize={5} fill="#66cc66" fontFamily="Courier New, monospace">40°</text>
-              <circle cx={kR} cy={y+11} r={5} fill="#d0d0d8" stroke="#888" strokeWidth={0.5}/>
-              <circle cx={kR} cy={y+11} r={2} fill="#aaa"/>
-              <line x1={kR} y1={y+6} x2={kR} y2={y+9} stroke="#666" strokeWidth={0.8}/>
-              <rect x={px+1} y={doorY} width={pw-2} height={doorH} rx={1} fill="#ececec" stroke="#777" strokeWidth={0.5}/>
-              <circle cx={hubCx} cy={hubCy} r={hubR} fill="#dde" stroke="#666" strokeWidth={0.9}/>
-              <circle cx={hubCx} cy={hubCy} r={hubR-5} fill="#1a1a2e" opacity={0.88} stroke="#444" strokeWidth={0.4}/>
-              <ellipse cx={hubCx-hubR*0.25} cy={hubCy-hubR*0.25} rx={hubR*0.2} ry={hubR*0.12} fill="white" opacity={0.07} transform={`rotate(-30,${hubCx-hubR*0.25},${hubCy-hubR*0.25})`}/>
-              <circle cx={hubCx} cy={hubCy} r={4} fill="none" stroke="#333" strokeWidth={0.5} opacity={0.4}/>
+              {/* Bandeau commandes */}
+              <rect x={px} y={y+3} width={pw} height={banH} rx={1} fill="#e0e2e8" stroke="#555" strokeWidth={0.6}/>
+              <circle cx={kL} cy={y+3+banH/2} r={banH*0.38} fill="#d0d0d8" stroke="#888" strokeWidth={0.5}/>
+              <circle cx={kL} cy={y+3+banH/2} r={banH*0.15} fill="#aaa"/>
+              <line x1={kL} y1={y+3} x2={kL} y2={y+3+banH*0.35} stroke="#666" strokeWidth={0.7}/>
+              <rect x={cx-8} y={y+4} width={16} height={banH-3} rx={0.8} fill="#1a2a1a" stroke="#555" strokeWidth={0.3}/>
+              <text x={cx} y={y+3+banH*0.72} textAnchor="middle" fontSize={4.5} fill="#66cc66" fontFamily="Courier New, monospace">40°</text>
+              <circle cx={kR} cy={y+3+banH/2} r={banH*0.38} fill="#d0d0d8" stroke="#888" strokeWidth={0.5}/>
+              <circle cx={kR} cy={y+3+banH/2} r={banH*0.15} fill="#aaa"/>
+              <line x1={kR} y1={y+3} x2={kR} y2={y+3+banH*0.35} stroke="#666" strokeWidth={0.7}/>
+              {/* Porte — colorable */}
+              <rect x={px+1} y={doorY} width={pw-2} height={doorH} rx={0.5}
+                fill={facadeFill} stroke="#777" strokeWidth={0.5}/>
+              {doorStyle==='frame' && <rect x={px+4} y={doorY+3} width={pw-8} height={doorH-6}
+                rx={0.5} fill="none" stroke="#bbb" strokeWidth={0.4}/>}
+              {/* Poignée centrée en haut de porte */}
+              <rect x={cx-hw/2} y={doorY+5} width={hw} height={2} rx={1} fill="#bbb" stroke="#888" strokeWidth={0.4}/>
+              {/* Hublot — 3 cercles au trait transparent */}
+              <circle cx={hubCx} cy={hubCy} r={hubR} fill="none" stroke={hubStroke} strokeWidth={1.8}/>
+              <circle cx={hubCx} cy={hubCy} r={hubR*0.86} fill="none" stroke={hubStroke} strokeWidth={0.7} opacity={0.6}/>
+              <circle cx={hubCx} cy={hubCy} r={hubR*0.7} fill="none" stroke={hubStroke} strokeWidth={1.2} opacity={0.5}/>
+              {/* Reflet verre */}
+              <ellipse cx={hubCx-hubR*0.28} cy={hubCy-hubR*0.28}
+                rx={hubR*0.22} ry={hubR*0.13}
+                fill="white" opacity={0.32}
+                transform={`rotate(-30,${hubCx-hubR*0.28},${hubCy-hubR*0.28})`}/>
             </>);
           })()}
 
@@ -684,6 +735,89 @@
               <rect x={px} y={oY} width={pw} height={oH} fill="#f2f2f2" stroke="#666" strokeWidth={0.7}/>
               <rect x={px+3} y={oY+3} width={pw-6} height={oH-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
               <text x={cx} y={oY+oH/2+2.5} textAnchor="middle" fontSize={5.5} fill="#555" fontFamily="monospace">FOUR</text>
+            </>);
+          })()}
+
+          {/* ── BOUTEILLE (A·15cm / 30cm) — même visuel que rangement 1 porte ── */}
+          {cab.lowerType==='bouteille' && !isInvalid && (() => {
+            const py = y+4, ph = h-8, pw = cw-6;
+            const hw = Math.min(cw*0.45, 20);
+            return (<>
+              <rect x={x+3} y={py} width={pw} height={ph} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
+              {doorStyle==='frame' && <rect x={x+6} y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>}
+              <rect x={cx-hw/2} y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+            </>);
+          })()}
+
+          {/* ── RANGEMENT 2P + ÉVIER 2P (même visuel 2 portes) ── */}
+          {(cab.lowerType==='rangement_2p' || cab.lowerType==='evier_2p') && !isInvalid && (() => {
+            const py = y+4, ph = h-8;
+            const sep = x+cw/2, pw = cw/2-5, hw = Math.min(cw/2*0.45, 18);
+            return (<>
+              <line x1={sep} y1={y+1} x2={sep} y2={y+h-1} stroke="#ccc" strokeWidth={0.5}/>
+              <rect x={x+3}   y={py} width={pw} height={ph} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
+              <rect x={sep+2} y={py} width={pw} height={ph} rx={0.5} fill="none" stroke="#c0c0c0" strokeWidth={0.5}/>
+              {doorStyle==='frame' && <>
+                <rect x={x+6}   y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
+                <rect x={sep+5} y={py+3} width={pw-6} height={ph-6} fill="none" stroke="#bbb" strokeWidth={0.4}/>
+              </>}
+              <rect x={x+cw/4-hw/2}   y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+              <rect x={x+3*cw/4-hw/2} y={py+5} width={hw} height={2} rx={1} fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+            </>);
+          })()}
+          {cab.lowerType==='evier_2p' && <Mitigeur cx={cx} ctY={ctY}/>}
+
+          {/* ── COULISSANT 4 TIROIRS (C) ── */}
+          {cab.lowerType==='coulissant_4t' && !isInvalid && (() => {
+            const dh = h/4, hw = Math.min(cw*0.38, 20);
+            return (<>
+              {[0,1,2,3].map(i => (
+                <g key={i}>
+                  {i>0 && <line x1={x+1} y1={y+i*dh} x2={x+cw-1} y2={y+i*dh} stroke="#555" strokeWidth={0.8}/>}
+                  <rect x={x+3} y={y+i*dh+2} width={cw-6} height={dh-4} rx={0.5}
+                    fill="none" stroke="#c8c8c8" strokeWidth={0.5}/>
+                  <rect x={cx-hw/2} y={y+i*dh+6} width={hw} height={2} rx={1}
+                    fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                </g>
+              ))}
+            </>);
+          })()}
+
+          {/* ── COULISSANT 2 TIROIRS + 1 COFFRE (D) ── */}
+          {cab.lowerType==='coulissant_2t1c' && !isInvalid && (() => {
+            const th = Math.round(h*0.22), ch = h-2*th;
+            const hw = Math.min(cw*0.38, 22);
+            return (<>
+              {[0,1].map(i => (
+                <g key={i}>
+                  {i>0 && <line x1={x+1} y1={y+i*th} x2={x+cw-1} y2={y+i*th} stroke="#555" strokeWidth={0.7}/>}
+                  <rect x={x+3} y={y+i*th+2} width={cw-6} height={th-4} rx={0.5}
+                    fill="none" stroke="#c8c8c8" strokeWidth={0.5}/>
+                  <rect x={cx-hw/2} y={y+i*th+6} width={hw} height={1.8} rx={0.9}
+                    fill="#aaa" stroke="#888" strokeWidth={0.3}/>
+                </g>
+              ))}
+              <line x1={x+1} y1={y+2*th} x2={x+cw-1} y2={y+2*th} stroke="#444" strokeWidth={1.2}/>
+              <rect x={x+3} y={y+2*th+3} width={cw-6} height={ch-6} rx={0.5}
+                fill="none" stroke="#c8c8c8" strokeWidth={0.6}/>
+              <rect x={cx-hw/2} y={y+2*th+8} width={hw} height={2.5} rx={1.2}
+                fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+            </>);
+          })()}
+
+          {/* ── COULISSANT 2 COFFRES (E) ── */}
+          {cab.lowerType==='coulissant_2c' && !isInvalid && (() => {
+            const ch = h/2, hw = Math.min(cw*0.38, 22);
+            return (<>
+              {[0,1].map(i => (
+                <g key={i}>
+                  {i>0 && <line x1={x+1} y1={y+i*ch} x2={x+cw-1} y2={y+i*ch} stroke="#444" strokeWidth={1.2}/>}
+                  <rect x={x+3} y={y+i*ch+3} width={cw-6} height={ch-6} rx={0.5}
+                    fill="none" stroke="#c8c8c8" strokeWidth={0.6}/>
+                  <rect x={cx-hw/2} y={y+i*ch+8} width={hw} height={2.5} rx={1.2}
+                    fill="#aaa" stroke="#888" strokeWidth={0.4}/>
+                </g>
+              ))}
             </>);
           })()}
 
@@ -869,7 +1003,7 @@
     function buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol }) {
       const colLabels  = { none:'Aucune', A:'Gauche + Droite', B:'2 à droite', C:'2 à gauche', D:'Gauche', E:'Droite' };
       const typeLabels = { colonne:'Rangement', frigo:'Réfrigérateur', four:'Colonne four', frigo_libre:'Frigo pose libre' };
-      const lowerLabels = { rangement:'Rangement portes', tiroirs:'Tiroirs', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Four encastré', ll:'Lave-linge' };
+      const lowerLabels = { rangement:'Rangement 1 porte', bouteille:'Rangement bouteilles', evier_1p:'Évier 1 porte', rangement_2p:'Rangement 2 portes', evier_2p:'Évier 2 portes', coulissant_4t:'Coulissant 4 tiroirs', coulissant_2t1c:'Coulissant 2 tiroirs + coffre', coulissant_2c:'Coulissant 2 coffres', tiroirs:'Tiroirs 3 niveaux', evier:'Sous-évier', lv:'Lave-vaisselle', four:'Bas four', ll:'Lave-linge' };
       const upperLabels = { rangement:'Rangement fermé', vide:'Espace vide', micro:'Micro-onde' };
       const doorLabels  = { smooth:'Lisse', frame:'Cadre' };
       const finLabel = (f) => f.name + (f.category==='bois' ? ' — Bois' : f.category==='laque' ? ' — Laque' : ' — Mélamine');
@@ -1169,7 +1303,7 @@
       const dispH    = Math.round(svgH * 2 * scale);
 
       const hasColFour = colTypes.some(t => t==='four');
-      const hasEvier   = cabs.some(c => c.lowerType==='evier');
+      const hasEvier   = cabs.some(c => EVIER_TYPES.includes(c.lowerType));
       const hasLV      = cabs.some(c => c.lowerType==='lv');
       const hasLl      = cabs.some(c => c.lowerType==='ll');
       const hasHood    = cabs.some(c => c.upperMode==='hood');
@@ -1321,65 +1455,86 @@
             Cliquer un meuble pour l'éditer
           </div>
         );
-        const isEvierSel = selLower.lowerType==='evier';
+        const isEvierSel = EVIER_TYPES.includes(selLower.lowerType);
         const isLvSel    = selLower.lowerType==='lv';
         const isLlSel    = selLower.lowerType==='ll';
         return (
           <Sec title={`Meuble bas · x=${selLower.x}cm · ${selLower.w}cm`}>
             <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>LARGEUR</div>
-            <div style={{display:'flex',gap:'4px',marginBottom:'10px'}}>
-              {[45,60,90].map(w => (
-                <Btn key={w} active={selLower.w===w}
-                  onClick={() => updWithReflow(selLower.id,{w, lowerType:fixLowerType(selLower.lowerType,w,hasColFour,cabs,selLower.id)})}>
-                  {w}cm
-                </Btn>
-              ))}
+            <div style={{display:'flex',gap:'4px',marginBottom:'10px',flexWrap:'wrap'}}>
+              {(() => {
+                const typeObj = LOWER_TYPES.find(t => t.id === selLower.lowerType);
+                const widths = typeObj?.widths ?? [45, 60, 90];
+                return widths.map(w => (
+                  <Btn key={w} active={selLower.w===w}
+                    onClick={() => updWithReflow(selLower.id,{w, lowerType:fixLowerType(selLower.lowerType,w,hasColFour,cabs,selLower.id)})}>
+                    {w}cm
+                  </Btn>
+                ));
+              })()}
             </div>
             <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>TYPE</div>
-            <div style={{display:'flex',flexDirection:'column',gap:'3px'}}>
-              {LOWER_TYPES.map(t => {
+            <div style={{display:'flex',flexDirection:'column',gap:'2px'}}>
+              {LOWER_TYPES.filter(t => !t.hidden || selLower.lowerType === t.id).map((t, idx, arr) => {
                 const widthIncompat = t.widths && !t.widths.includes(selLower.w);
                 const colFourBlock  = t.noColFour && hasColFour;
-                const evierDup      = t.id==='evier' && hasEvier && !isEvierSel;
+                const evierDup      = EVIER_TYPES.includes(t.id) && hasEvier && !isEvierSel;
+                const isBouteilleSel = selLower.lowerType === 'bouteille';
+                const bouteilleCount = cabs.filter(c => c.lowerType === 'bouteille').length;
+                const bouteilleFull  = t.id === 'bouteille' && !isBouteilleSel
+                                       && t.maxCount && bouteilleCount >= t.maxCount;
                 const lvDup         = t.id==='lv' && hasLV && !isLvSel;
                 const llDup         = t.id==='ll' && hasLl && !isLlSel;
-                const disabled = widthIncompat || colFourBlock || evierDup || lvDup || llDup;
+                const disabled = widthIncompat || colFourBlock || evierDup || lvDup || llDup || bouteilleFull;
                 const reason = widthIncompat ? `nécessite ${t.widths?.join(' ou ')}cm`
                              : colFourBlock  ? 'incompatible avec colonne four'
                              : evierDup      ? 'évier déjà présent'
                              : lvDup         ? 'lave-vaisselle déjà présent'
-                             : llDup         ? 'lave-linge déjà présent' : '';
+                             : llDup         ? 'lave-linge déjà présent'
+                             : bouteilleFull ? `max ${t.maxCount} rangements bouteilles` : '';
+                const prevGroup = idx > 0 ? arr[idx-1].group : null;
+                const showSep = t.group && t.group !== prevGroup;
                 return (
-                  <Btn key={t.id} active={selLower.lowerType===t.id} disabled={disabled}
-                    title={disabled ? reason : ''}
-                    onClick={() => {
-                      const newType = t.id;
-                      const plaqueMaker = newType === 'four' || newType === 'rang_plaque';
-                      const plaqueKiller = newType === 'evier';
-                      const otherHasPlaque = cabs.some(c => c.id !== selLower.id && c.hasPlaque);
-                      setCabs(p => p.map(c => {
-                        if (c.id === selLower.id) {
-                          const newHasPlaque = plaqueKiller ? false
-                            : plaqueMaker && !otherHasPlaque ? true
-                            : c.hasPlaque;
-                          return {...c, lowerType: newType, hasPlaque: newHasPlaque};
+                  <React.Fragment key={t.id}>
+                    {showSep && idx > 0 && <div style={{fontSize:'8px',color:'#bbb',letterSpacing:'1.5px',marginTop:'5px',paddingTop:'4px',borderTop:'1px solid #f0f0f0',textTransform:'uppercase'}}>{t.group}</div>}
+                    <Btn active={selLower.lowerType===t.id} disabled={disabled}
+                      title={disabled ? reason : ''}
+                      onClick={() => {
+                        const newType = t.id;
+                        const forceW = newType === 'bouteille' ? 15 : undefined;
+                        const plaqueMaker = newType === 'four' || newType === 'rang_plaque';
+                        const plaqueKiller = EVIER_TYPES.includes(newType) || newType === 'bouteille';
+                        const otherHasPlaque = cabs.some(c => c.id !== selLower.id && c.hasPlaque);
+                        if (forceW !== undefined) {
+                          updWithReflow(selLower.id, { lowerType: newType, w: forceW, hasPlaque: false });
+                        } else {
+                          setCabs(p => p.map(c => {
+                            if (c.id === selLower.id) {
+                              const newHasPlaque = plaqueKiller ? false
+                                : plaqueMaker && !otherHasPlaque ? true
+                                : c.hasPlaque;
+                              return {...c, lowerType: newType, hasPlaque: newHasPlaque};
+                            }
+                            return c;
+                          }));
                         }
-                        return c;
-                      }));
-                    }}
-                    style={{textAlign:'left',fontSize:'11px'}}>
-                    {t.label}{disabled ? ' ⊘' : ''}
-                  </Btn>
+                      }}
+                      style={{textAlign:'left',fontSize:'11px'}}>
+                      {t.label}{disabled ? ' ⊘' : ''}
+                    </Btn>
+                  </React.Fragment>
                 );
               })}
             </div>
 
             {/* Plaque de cuisson */}
             {(() => {
-              const isEvier = selLower.lowerType === 'evier';
+              const isEvier = selLower.lowerType === 'evier' || EVIER_TYPES.includes(selLower.lowerType);
               const otherHasPlaque = cabs.some(c => c.id !== selLower.id && c.hasPlaque);
-              const disabled = isEvier || (otherHasPlaque && !selLower.hasPlaque);
+              const tooNarrow = selLower.w < 45;
+              const disabled = isEvier || (otherHasPlaque && !selLower.hasPlaque) || tooNarrow;
               const reason = isEvier ? 'Non disponible sur évier'
+                           : tooNarrow ? 'Largeur min. 45 cm pour plaque'
                            : (otherHasPlaque && !selLower.hasPlaque) ? 'Plaque déjà placée' : '';
               return (
                 <div style={{marginTop:'10px', paddingTop:'10px', borderTop:'1px solid #eee'}}>
