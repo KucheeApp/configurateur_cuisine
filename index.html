@@ -131,7 +131,10 @@
         'modal.surtitle':'Recevoir mon projet','modal.title':'Devis par e-mail',
         'modal.name':'Nom & Prénom *','modal.namePlaceholder':'Ex : Marie Dupont',
         'modal.email':'Adresse e-mail *','modal.phone':'Téléphone',
-        'modal.phonePlaceholder':'06 xx xx xx xx','modal.message':'Message (optionnel)',
+        'modal.phonePlaceholder':'06 xx xx xx xx',
+        'modal.city':'Ville','modal.cityPlaceholder':'Ex : Lyon',
+        'modal.country':'Pays','modal.countryPlaceholder':'Ex : France',
+        'modal.message':'Message (optionnel)',
         'modal.messagePlaceholder':'Précisez votre projet, délais, budget...',
         'modal.summary':'Le récapitulatif de votre configuration sera joint à l\'e-mail.',
         'modal.cancel':'Annuler','modal.send':'ENVOYER MON DEVIS →','modal.sending':'ENVOI EN COURS…',
@@ -220,7 +223,10 @@
         'modal.surtitle':'Receive my project','modal.title':'Quote by email',
         'modal.name':'Full name *','modal.namePlaceholder':'E.g. John Smith',
         'modal.email':'Email address *','modal.phone':'Phone',
-        'modal.phonePlaceholder':'+44 7xxx xxxxxx','modal.message':'Message (optional)',
+        'modal.phonePlaceholder':'+44 7xxx xxxxxx',
+        'modal.city':'City','modal.cityPlaceholder':'E.g. London',
+        'modal.country':'Country','modal.countryPlaceholder':'E.g. United Kingdom',
+        'modal.message':'Message (optional)',
         'modal.messagePlaceholder':'Tell us about your project, timeline, budget...',
         'modal.summary':'Your configuration summary will be attached to the email.',
         'modal.cancel':'Cancel','modal.send':'SEND MY QUOTE →','modal.sending':'SENDING…',
@@ -308,7 +314,10 @@
         'modal.surtitle':'Ricevi il mio progetto','modal.title':'Preventivo via email',
         'modal.name':'Nome e Cognome *','modal.namePlaceholder':'Es. Mario Rossi',
         'modal.email':'Indirizzo email *','modal.phone':'Telefono',
-        'modal.phonePlaceholder':'+39 3xx xxx xxxx','modal.message':'Messaggio (opzionale)',
+        'modal.phonePlaceholder':'+39 3xx xxx xxxx',
+        'modal.city':'Città','modal.cityPlaceholder':'Es. Milano',
+        'modal.country':'Paese','modal.countryPlaceholder':'Es. Italia',
+        'modal.message':'Messaggio (opzionale)',
         'modal.messagePlaceholder':'Descrivi il tuo progetto, tempi, budget...',
         'modal.summary':'Il riepilogo della tua configurazione sarà allegato all\'email.',
         'modal.cancel':'Annulla','modal.send':'INVIA IL MIO PREVENTIVO →','modal.sending':'INVIO IN CORSO…',
@@ -396,7 +405,10 @@
         'modal.surtitle':'Recibir mi proyecto','modal.title':'Presupuesto por email',
         'modal.name':'Nombre y Apellidos *','modal.namePlaceholder':'Ej. Juan García',
         'modal.email':'Dirección email *','modal.phone':'Teléfono',
-        'modal.phonePlaceholder':'+34 6xx xxx xxx','modal.message':'Mensaje (opcional)',
+        'modal.phonePlaceholder':'+34 6xx xxx xxx',
+        'modal.city':'Ciudad','modal.cityPlaceholder':'Ej. Madrid',
+        'modal.country':'País','modal.countryPlaceholder':'Ej. España',
+        'modal.message':'Mensaje (opcional)',
         'modal.messagePlaceholder':'Describe tu proyecto, plazos, presupuesto...',
         'modal.summary':'El resumen de tu configuración se adjuntará al email.',
         'modal.cancel':'Cancelar','modal.send':'ENVIAR MI PRESUPUESTO →','modal.sending':'ENVIANDO…',
@@ -484,7 +496,10 @@
         'modal.surtitle':'Mein Projekt erhalten','modal.title':'Angebot per E-Mail',
         'modal.name':'Vor- und Nachname *','modal.namePlaceholder':'z.B. Max Mustermann',
         'modal.email':'E-Mail-Adresse *','modal.phone':'Telefon',
-        'modal.phonePlaceholder':'+49 1xx xxxxxxx','modal.message':'Nachricht (optional)',
+        'modal.phonePlaceholder':'+49 1xx xxxxxxx',
+        'modal.city':'Stadt','modal.cityPlaceholder':'z.B. Berlin',
+        'modal.country':'Land','modal.countryPlaceholder':'z.B. Deutschland',
+        'modal.message':'Nachricht (optional)',
         'modal.messagePlaceholder':'Beschreibe dein Projekt, Zeitplan, Budget...',
         'modal.summary':'Die Zusammenfassung deiner Konfiguration wird der E-Mail beigefügt.',
         'modal.cancel':'Abbrechen','modal.send':'ANGEBOT ABSENDEN →','modal.sending':'WIRD GESENDET…',
@@ -1579,6 +1594,8 @@
       const [nom,    setNom]    = React.useState('');
       const [email,  setEmail]  = React.useState('');
       const [tel,    setTel]    = React.useState('');
+      const [ville,  setVille]  = React.useState('');
+      const [pays,   setPays]   = React.useState('');
       const [msg,    setMsg]    = React.useState('');
       const [status, setStatus] = React.useState('idle');
 
@@ -1604,6 +1621,8 @@
               nom:     nom.trim(),
               email:   email.trim(),
               tel:     tel.trim() || '—',
+              ville:   ville.trim() || '—',
+              pays:    pays.trim() || '—',
               message: msg.trim() || '—',
               recap:   quoteSummary,
               png:     pngB64,
@@ -1651,6 +1670,16 @@
                 <div style={{marginBottom:'12px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')}</div>
                   <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/>
+                </div>
+                <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')}</div>
+                    <input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')}</div>
+                    <input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/>
+                  </div>
                 </div>
                 <div style={{marginBottom:'16px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div>
