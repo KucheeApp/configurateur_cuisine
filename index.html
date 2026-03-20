@@ -1618,15 +1618,16 @@
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    revendeur_id: window.REVENDEUR_CONFIG?.revendeurId || null,
-    nom:          nom.trim(),
-    email:        email.trim(),
-    telephone:    tel.trim() || null,
-    ville:        ville.trim() || null,
-    pays:         pays.trim() || null,
-    message:      msg.trim() || null,
-    recap:        quoteSummary,
-  })
+  revendeur_id: window.REVENDEUR_CONFIG?.revendeurId || null,
+  nom:          nom.trim(),
+  email:        email.trim(),
+  telephone:    tel.trim() || null,
+  ville:        ville.trim() || null,
+  pays:         pays.trim() || null,
+  message:      msg.trim() || null,
+  recap:        quoteSummary,
+  png:          pngB64,   // ← ajouter cette ligne
+})
 });
 const json = await res.json();
 if (json.ok) {
