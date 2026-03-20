@@ -1677,83 +1677,6 @@
           console.error('Fetch error:', err);
           setStatus('error');
         }
-      }; const send = async () => {
-        if (!isValid) return;
-        setStatus('sending');
-        try {
-          let pngB64 = '';
-          if (svgRef && svgRef.current && window.htmlToImage) {
-            try {
-              const dataUrl = await htmlToImage.toPng(svgRef.current, { backgroundColor: '#ffffff' });
-              pngB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
-            } catch(e) { console.warn('PNG capture failed', e); }
-          }
-          const res = await fetch('https://app.kuchee.com/api/leads', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              revendeur_id: window.REVENDEUR_CONFIG?.revendeurId || null,
-              nom:          nom.trim(),
-              email:        email.trim(),
-              telephone:    tel.trim(),
-              ville:        ville.trim(),
-              pays:         pays.trim(),
-              message:      msg.trim() || null,
-              delai:        delai,
-              recap:        quoteSummary,
-              png:          pngB64,
-            })
-          });
-          const json = await res.json();
-          if (json.ok) {
-            setStatus('success');
-          } else {
-            console.error('leads error:', json.error);
-            setStatus('error');
-          }
-        } catch(err) {
-          console.error('Fetch error:', err);
-          setStatus('error');
-        }
-      };const send = async () => {
-        if (!isValid) return;
-        setStatus('sending');
-        try {
-          // Capture PNG du plan SVG
-          let pngB64 = '';
-          if (svgRef && svgRef.current && window.htmlToImage) {
-            try {
-              const dataUrl = await htmlToImage.toPng(svgRef.current, { backgroundColor: '#ffffff' });
-              pngB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
-            } catch(e) { console.warn('PNG capture failed', e); }
-          }
-
-          const res = await fetch('https://app.kuchee.com/api/leads', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-  revendeur_id: window.REVENDEUR_CONFIG?.revendeurId || null,
-  nom:          nom.trim(),
-  email:        email.trim(),
-  telephone:    tel.trim() || null,
-  ville:        ville.trim() || null,
-  pays:         pays.trim() || null,
-  message:      msg.trim() || null,
-  recap:        quoteSummary,
-  png:          pngB64,
-})
-});
-const json = await res.json();
-if (json.ok) {
-  setStatus('success');
-} else {
-  console.error('leads error:', json.error);
-  setStatus('error');
-}
-        } catch(err) {
-          console.error('Fetch error:', err);
-          setStatus('error');
-        }
       };
 
       const inputStyle = {width:'100%',padding:'8px 10px',border:'1px solid #ccc',fontFamily:'Courier New,monospace',fontSize:'12px',background:'#fafafa',outline:'none',boxSizing:'border-box'};
@@ -1799,6 +1722,15 @@ if (json.ok) {
                         {label}
                       </label>
                     ))}
+                  </div>
+                </div><div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')}</div>
+                    <input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')}</div>
+                    <input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/>
                   </div>
                 </div>
                 <div style={{marginBottom:'16px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div><textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder={T('modal.messagePlaceholder')} rows={3} style={{...inputStyle,resize:'vertical'}}/></div>
