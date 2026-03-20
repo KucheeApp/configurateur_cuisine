@@ -1590,16 +1590,21 @@
     }
 
     // ====== MODAL LEAD ======
-    function LeadModal({ onClose, quoteSummary, svgRef, T }) {
-      const [nom,    setNom]    = React.useState('');
-      const [email,  setEmail]  = React.useState('');
-      const [tel,    setTel]    = React.useState('');
-      const [ville,  setVille]  = React.useState('');
-      const [pays,   setPays]   = React.useState('');
-      const [msg,    setMsg]    = React.useState('');
-      const [status, setStatus] = React.useState('idle');
-
-      const isValid = nom.trim().length > 0 && email.includes('@');
+   function LeadModal({ onClose, quoteSummary, svgRef, T }) {
+      const [nom,setNom]=React.useState('');
+      const [email,setEmail]=React.useState('');
+      const [tel,setTel]=React.useState('');
+      const [ville,setVille]=React.useState('');
+      const [pays,setPays]=React.useState('');
+      const [msg,setMsg]=React.useState('');
+      const [delai,setDelai]=React.useState('');
+      const [status,setStatus]=React.useState('idle');
+      const [emailVerified,setEmailVerified]=React.useState(false);
+      const [verifCode,setVerifCode]=React.useState('');
+      const [verifSent,setVerifSent]=React.useState(false);
+      const [verifError,setVerifError]=React.useState('');
+      const [verifLoading,setVerifLoading]=React.useState(false);
+      const isValid=nom.trim().length>0&&email.includes('@')&&tel.trim().length>0&&ville.trim().length>0&&pays.trim().length>0&&delai!==''&&emailVerified;
 
       const send = async () => {
         if (!isValid) return;
