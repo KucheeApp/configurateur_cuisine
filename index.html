@@ -1614,31 +1614,27 @@
             } catch(e) { console.warn('PNG capture failed', e); }
           }
 
-          const res = await fetch('https://kuchee.com/send.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nom:     nom.trim(),
-              email:   email.trim(),
-              tel:     tel.trim() || '—',
-              ville:   ville.trim() || '—',
-              pays:    pays.trim() || '—',
-              message: msg.trim() || '—',
-              recap:   quoteSummary,
-              png:     pngB64,
-            })
-          });
-          const json = await res.json();
-          if (json.ok) {
-            setStatus('success');
-          } else {
-            console.error('send.php error:', json.error);
-            setStatus('error');
-          }
-        } catch(err) {
-          console.error('Fetch error:', err);
-          setStatus('error');
-        }
+          const res = await fetch('https://nextjs-boilerplate-nine-wheat-99.vercel.app/api/leads', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    revendeur_id: window.REVENDEUR_CONFIG?.revendeurId || null,
+    nom:          nom.trim(),
+    email:        email.trim(),
+    telephone:    tel.trim() || null,
+    ville:        ville.trim() || null,
+    pays:         pays.trim() || null,
+    message:      msg.trim() || null,
+    recap:        quoteSummary,
+  })
+});
+const json = await res.json();
+if (json.ok) {
+  setStatus('success');
+} else {
+  console.error('leads error:', json.error);
+  setStatus('error');
+}
       };
 
       const inputStyle = {width:'100%',padding:'8px 10px',border:'1px solid #ccc',fontFamily:'Courier New,monospace',fontSize:'12px',background:'#fafafa',outline:'none',boxSizing:'border-box'};
