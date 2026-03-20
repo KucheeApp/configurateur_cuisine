@@ -1639,41 +1639,6 @@
         } catch(e) { setVerifError('Erreur réseau'); }
         setVerifLoading(false);
       };
-
-     const sendVerifCode = async () => {
-        if (!email.includes('@')) return;
-        setVerifLoading(true);
-        setVerifError('');
-        try {
-          const res = await fetch('https://app.kuchee.com/api/verify-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'send', email: email.trim() })
-          });
-          const json = await res.json();
-          if (json.ok) { setVerifSent(true); }
-          else { setVerifError('Erreur envoi code'); }
-        } catch(e) { setVerifError('Erreur réseau'); }
-        setVerifLoading(false);
-      };
-
-      const checkVerifCode = async () => {
-        if (!verifCode || verifCode.length !== 6) return;
-        setVerifLoading(true);
-        setVerifError('');
-        try {
-          const res = await fetch('https://app.kuchee.com/api/verify-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'verify', email: email.trim(), code: verifCode })
-          });
-          const json = await res.json();
-          if (json.ok) { setEmailVerified(true); setVerifError(''); }
-          else { setVerifError(json.error || 'Code invalide'); }
-        } catch(e) { setVerifError('Erreur réseau'); }
-        setVerifLoading(false);
-      };
-
       const send = async () => {
         if (!isValid) return;
         setStatus('sending');
