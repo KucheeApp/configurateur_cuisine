@@ -1822,6 +1822,20 @@ if (json.ok) {
                   <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/>
                 </div>
                 <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
+                  <div style={{flex:1}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')} *</div><input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/></div>
+                  <div style={{flex:1}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')} *</div><input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/></div>
+                </div>
+                <div style={{marginBottom:'12px'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'8px',textTransform:'uppercase'}}>Délai du projet *</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                    {[['immediat','⚡ Immédiat'],['3-6mois','📅 3 à 6 mois'],['6plus','🕐 Plus de 6 mois']].map(([val,label])=>(
+                      <label key={val} style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'12px',fontFamily:'Courier New,monospace',padding:'8px 10px',border:`1px solid ${delai===val?'#222':'#ddd'}`,borderRadius:'2px',background:delai===val?'#f9f9f9':'#fff'}}>
+                        <input type="radio" name="delai" value={val} checked={delai===val} onChange={e=>setDelai(e.target.value)} style={{cursor:'pointer'}}/>
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div><div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
                   <div style={{flex:1}}>
                     <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')}</div>
                     <input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/>
