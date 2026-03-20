@@ -1845,10 +1845,36 @@ if (json.ok) {
                     <input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/>
                   </div>
                 </div>
-                <div style={{marginBottom:'16px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div>
-                  <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder={T('modal.messagePlaceholder')}
-                    rows={3} style={{...inputStyle,resize:'vertical'}}/>
+                <div style={{marginBottom:'16px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div><textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder={T('modal.messagePlaceholder')} rows={3} style={{...inputStyle,resize:'vertical'}}/></div>
+
+                <div style={{marginBottom:'16px',padding:'12px',background:'#f9f9f9',border:'1px solid #e8e8e8',borderRadius:'4px'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'8px',textTransform:'uppercase'}}>Vérification email *</div>
+                  {!emailVerified ? (<>
+                    {!verifSent ? (
+                      <button onClick={sendVerifCode} disabled={!email.includes('@')||verifLoading}
+                        style={{width:'100%',padding:'8px',background:email.includes('@')?'#222':'#ccc',color:'#fff',border:'none',cursor:email.includes('@')?'pointer':'not-allowed',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'1px',borderRadius:'2px'}}>
+                        {verifLoading?'Envoi...':'📧 Recevoir le code de vérification'}
+                      </button>
+                    ) : (
+                      <div>
+                        <div style={{fontSize:'11px',color:'#555',marginBottom:'8px'}}>Code envoyé à <strong>{email}</strong></div>
+                        <div style={{display:'flex',gap:'8px'}}>
+                          <input type="text" value={verifCode} onChange={e=>setVerifCode(e.target.value)} placeholder="123456" maxLength={6}
+                            style={{...inputStyle,letterSpacing:'4px',fontSize:'16px',textAlign:'center',flex:1}}/>
+                          <button onClick={checkVerifCode} disabled={verifCode.length!==6||verifLoading}
+                            style={{padding:'8px 16px',background:verifCode.length===6?'#222':'#ccc',color:'#fff',border:'none',cursor:verifCode.length===6?'pointer':'not-allowed',fontFamily:'Courier New,monospace',fontSize:'11px',borderRadius:'2px',whiteSpace:'nowrap'}}>
+                            {verifLoading?'...':'Valider'}
+                          </button>
+                        </div>
+                        <button onClick={sendVerifCode} style={{background:'none',border:'none',color:'#888',fontSize:'10px',cursor:'pointer',marginTop:'6px',fontFamily:'Courier New,monospace'}}>
+                          Renvoyer le code
+                        </button>
+                      </div>
+                    )}
+                    {verifError && <div style={{color:'#cc3333',fontSize:'11px',marginTop:'6px'}}>{verifError}</div>}
+                  </>) : (
+                    <div style={{color:'#1a7a3a',fontSize:'12px',fontWeight:'bold'}}>✓ Email vérifié</div>
+                  )}
                 </div>
 
                 <div style={{fontSize:'9px',color:'#aaa',marginBottom:'16px',lineHeight:'1.6'}}>
