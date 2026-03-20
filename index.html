@@ -2244,7 +2244,9 @@
           {/* Header */}
           <div style={{padding:'10px 20px',borderBottom:'1px solid #e8e8e8',background:'#fff',display:'flex',alignItems:'center',gap:'16px'}}>
 <a href={window.REVENDEUR_CONFIG?.siteUrl || 'https://kuchee.com/'} style={{fontSize:'12px',letterSpacing:'3px',color:'#111',fontWeight:'bold',textDecoration:'none',marginRight:'4px'}}>HOME</a>
-            <span style={{color:'#ddd',fontSize:'12px'}}>|</span>
+{window.REVENDEUR_CONFIG?.logoUrl && (
+  <img src={window.REVENDEUR_CONFIG.logoUrl} alt={window.REVENDEUR_CONFIG.nomCommercial || ''} style={{height:'28px',maxWidth:'120px',objectFit:'contain',marginLeft:'8px'}} />
+)}            <span style={{color:'#ddd',fontSize:'12px'}}>|</span>
             <span style={{fontSize:'14px',letterSpacing:'5px',color:'#111',fontWeight:'bold'}}>{T('hdr.title')}</span>
             <span style={{fontSize:'9px',color:'#bbb',letterSpacing:'2px'}}>{T('hdr.subtitle')}</span>
             {statusMsg && (
