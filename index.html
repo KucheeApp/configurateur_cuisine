@@ -1635,6 +1635,10 @@ if (json.ok) {
   console.error('leads error:', json.error);
   setStatus('error');
 }
+        } catch(err) {
+          console.error('Fetch error:', err);
+          setStatus('error');
+        }
       };
 
       const inputStyle = {width:'100%',padding:'8px 10px',border:'1px solid #ccc',fontFamily:'Courier New,monospace',fontSize:'12px',background:'#fafafa',outline:'none',boxSizing:'border-box'};
