@@ -1704,10 +1704,7 @@
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.email')}</div>
                   <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.com" style={inputStyle}/>
                 </div>
-                <div style={{marginBottom:'12px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')} *</div><input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/></div><div style={{marginBottom:'12px'}}>
-                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')}</div>
-                  <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/>
-                </div>
+                <div style={{marginBottom:'12px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')} *</div><input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/></div>
                 <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
                   <div style={{flex:1}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')} *</div><input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/></div>
                   <div style={{flex:1}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')} *</div><input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/></div>
@@ -1721,15 +1718,6 @@
                         {label}
                       </label>
                     ))}
-                  </div>
-                </div><div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')}</div>
-                    <input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/>
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')}</div>
-                    <input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/>
                   </div>
                 </div>
                 <div style={{marginBottom:'16px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div><textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder={T('modal.messagePlaceholder')} rows={3} style={{...inputStyle,resize:'vertical'}}/></div>
