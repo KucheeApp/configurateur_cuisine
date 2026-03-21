@@ -1845,6 +1845,7 @@
     // ====== COMPOSANT PRINCIPAL ======
     function KitchenDesigner() {
       const [wallLen,        setWallLen]        = React.useState(360);
+      const [sliderVal,      setSliderVal]      = React.useState(360);
       const [colCfg,         setColCfg]          = React.useState('A');
       const [colTypes,       setColTypes]        = React.useState(['colonne','colonne']);
       const [extraCols,      setExtraCols]       = React.useState([]);
@@ -2390,10 +2391,23 @@
 
                 <Sec title={T('sec.wallLen')}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                    <input type="range" min={180} max={600} step={15} value={wallLen}
-                      onChange={e => { const v=+e.target.value; setWallLen(v); regenCabs(v,colCfg); }}
+                    <input type="range" min={180} max={600} step={1} value={sliderVal}
+                      onChange={e => setSliderVal(+e.target.value)}
+                      onMouseUp={e => {
+                        const snapped = Math.round(+e.target.value / 5) * 5;
+                        const clamped = Math.max(180, Math.min(600, snapped));
+                        setSliderVal(clamped); setWallLen(clamped); regenCabs(clamped, colCfg);
+                      }}
+                      onTouchEnd={e => {
+                        const snapped = Math.round(sliderVal / 5) * 5;
+                        const clamped = Math.max(180, Math.min(600, snapped));
+                        setSliderVal(clamped); setWallLen(clamped); regenCabs(clamped, colCfg);
+                      }}
                       style={{flex:1}} />
-                    <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold'}}>{wallLen}cm</span>
+                    <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold',
+                      color: sliderVal !== wallLen ? '#aaa' : 'inherit'}}>
+                      {sliderVal}cm
+                    </span>
                   </div>
                 </Sec>
 
@@ -2560,38 +2574,25 @@
                           <Btn key={sz} active={ec.w===sz}
                             onClick={() => {
                               const oldW = ec.w, diff = sz - oldW;
-                              if (diff === 0) return;
-                              const [cabStart, cabEnd] = getCabRange(wallLen, colCfg);
-                              const newColType = ec.colType==='four' && sz!==60 ? 'colonne' : ec.colType;
-                              const colRight = ec.x + oldW;
-                              const rightAdj = cabs.find(c => Math.abs(c.x - colRight) < 2);
-                              if (rightAdj) {
-                                // Colonne gauche ou milieu : le meuble droit absorbe le delta
-                                const updatedExtraCols = extraCols.map(c => c.id===ec.id ? {...c, w:sz, colType:newColType} : c);
-                                setExtraCols(updatedExtraCols);
+                              setExtraCols(prev => prev.map(c => c.id===ec.id
+                                ? {...c, w:sz, colType: c.colType==='four' && sz!==60 ? 'colonne' : c.colType}
+                                : c));
+                              if (diff !== 0) {
                                 setCabs(prev => {
                                   const sorted = [...prev].sort((a,b)=>a.x-b.x);
-                                  const adjIdx = sorted.findIndex(c => c.id === rightAdj.id);
+                                  const colRight = ec.x + oldW, colLeft = ec.x;
+                                  let adjIdx = sorted.findIndex(c => Math.abs(c.x - colRight) < 2);
                                   if (adjIdx >= 0) {
                                     const adj = sorted[adjIdx], newW = adj.w - diff;
                                     if (newW >= 20) sorted[adjIdx] = {...adj, x: adj.x + diff, w: newW};
+                                  } else {
+                                    adjIdx = sorted.findIndex(c => Math.abs((c.x + c.w) - colLeft) < 2);
+                                    if (adjIdx >= 0) {
+                                      const adj = sorted[adjIdx], newW = adj.w - diff;
+                                      if (newW >= 20) sorted[adjIdx] = {...adj, w: newW};
+                                    }
                                   }
                                   return sorted;
-                                });
-                              } else {
-                                // Colonne en bout droit : glisser la colonne vers la droite
-                                // et élargir le dernier meuble bas pour combler le gap
-                                const newX = cabEnd - sz;
-                                const updatedExtraCols = extraCols.map(c => c.id===ec.id ? {...c, w:sz, x:newX, colType:newColType} : c);
-                                setExtraCols(updatedExtraCols);
-                                setCabs(prev => {
-                                  const sorted = [...prev].sort((a,b)=>a.x-b.x);
-                                  // Élargit le dernier meuble de (oldW - sz) pour combler l'espace libéré
-                                  if (sorted.length > 0) {
-                                    const li = sorted.length - 1;
-                                    sorted[li] = {...sorted[li], w: sorted[li].w + (oldW - sz)};
-                                  }
-                                  return repackCabs(sorted, cabStart, updatedExtraCols);
                                 });
                               }
                             }}>
