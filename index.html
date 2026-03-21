@@ -2560,25 +2560,38 @@
                           <Btn key={sz} active={ec.w===sz}
                             onClick={() => {
                               const oldW = ec.w, diff = sz - oldW;
-                              setExtraCols(prev => prev.map(c => c.id===ec.id
-                                ? {...c, w:sz, colType: c.colType==='four' && sz!==60 ? 'colonne' : c.colType}
-                                : c));
-                              if (diff !== 0) {
+                              if (diff === 0) return;
+                              const [cabStart, cabEnd] = getCabRange(wallLen, colCfg);
+                              const newColType = ec.colType==='four' && sz!==60 ? 'colonne' : ec.colType;
+                              const colRight = ec.x + oldW;
+                              const rightAdj = cabs.find(c => Math.abs(c.x - colRight) < 2);
+                              if (rightAdj) {
+                                // Colonne gauche ou milieu : le meuble droit absorbe le delta
+                                const updatedExtraCols = extraCols.map(c => c.id===ec.id ? {...c, w:sz, colType:newColType} : c);
+                                setExtraCols(updatedExtraCols);
                                 setCabs(prev => {
                                   const sorted = [...prev].sort((a,b)=>a.x-b.x);
-                                  const colRight = ec.x + oldW, colLeft = ec.x;
-                                  let adjIdx = sorted.findIndex(c => Math.abs(c.x - colRight) < 2);
+                                  const adjIdx = sorted.findIndex(c => c.id === rightAdj.id);
                                   if (adjIdx >= 0) {
                                     const adj = sorted[adjIdx], newW = adj.w - diff;
                                     if (newW >= 20) sorted[adjIdx] = {...adj, x: adj.x + diff, w: newW};
-                                  } else {
-                                    adjIdx = sorted.findIndex(c => Math.abs((c.x + c.w) - colLeft) < 2);
-                                    if (adjIdx >= 0) {
-                                      const adj = sorted[adjIdx], newW = adj.w - diff;
-                                      if (newW >= 20) sorted[adjIdx] = {...adj, w: newW};
-                                    }
                                   }
                                   return sorted;
+                                });
+                              } else {
+                                // Colonne en bout droit : glisser la colonne vers la droite
+                                // et élargir le dernier meuble bas pour combler le gap
+                                const newX = cabEnd - sz;
+                                const updatedExtraCols = extraCols.map(c => c.id===ec.id ? {...c, w:sz, x:newX, colType:newColType} : c);
+                                setExtraCols(updatedExtraCols);
+                                setCabs(prev => {
+                                  const sorted = [...prev].sort((a,b)=>a.x-b.x);
+                                  // Élargit le dernier meuble de (oldW - sz) pour combler l'espace libéré
+                                  if (sorted.length > 0) {
+                                    const li = sorted.length - 1;
+                                    sorted[li] = {...sorted[li], w: sorted[li].w + (oldW - sz)};
+                                  }
+                                  return repackCabs(sorted, cabStart, updatedExtraCols);
                                 });
                               }
                             }}>
