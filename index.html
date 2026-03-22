@@ -1640,15 +1640,6 @@
         setVerifLoading(false);
       };
       const send = async () => {
-        console.log('[SEND] isValid:', isValid, {
-          nom: nom.trim().length > 0,
-          email: email.includes('@'),
-          tel: tel.trim().length > 0,
-          ville: ville.trim().length > 0,
-          pays: pays.trim().length > 0,
-          delai: delai !== '' ? delai : '⚠️ vide',
-          emailVerified,
-        });
         if (!isValid) return;
         setStatus('sending');
         try {
@@ -1659,33 +1650,28 @@
               pngB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
             } catch(e) { console.warn('PNG capture failed', e); }
           }
-          const payload = JSON.stringify({
-            revendeur_id:   window.REVENDEUR_CONFIG?.revendeurId || 'f16be674-3fc9-44a2-a746-dddae12b5480',
-            nom:            nom.trim(),
-            email:          email.trim(),
-            email_verified: emailVerified,
-            telephone:      tel.trim(),
-            ville:          ville.trim(),
-            pays:           pays.trim(),
-            message:        msg.trim() || null,
-            delai:          delai,
-            recap:          quoteSummary,
-            png:            pngB64,
+          const res = await fetch('https://app.kuchee.com/api/leads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              revendeur_id:   window.REVENDEUR_CONFIG?.revendeurId || 'f16be674-3fc9-44a2-a746-dddae12b5480',
+              nom:            nom.trim(),
+              email:          email.trim(),
+              email_verified: emailVerified,
+              telephone:      tel.trim(),
+              ville:          ville.trim(),
+              pays:           pays.trim(),
+              message:        msg.trim() || null,
+              delai:          delai,
+              recap:          quoteSummary,
+              png:            pngB64,
+            }),
           });
-          const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload };
-          const [resLeads, resMail] = await Promise.all([
-            fetch('https://app.kuchee.com/api/leads', opts),
-            fetch('https://kuchee.com/send.php', opts),
-          ]);
-          if (resLeads.ok && resMail.ok) {
+          const json = await res.json().catch(() => ({}));
+          if (res.ok) {
             setStatus('success');
           } else {
-            const [j1, j2] = await Promise.all([
-              resLeads.json().catch(() => ({})),
-              resMail.json().catch(() => ({})),
-            ]);
-            console.error('leads error:', j1.error || resLeads.status);
-            console.error('mail error:', j2.error || resMail.status);
+            console.error('leads error:', json.error || res.status);
             setStatus('error');
           }
         } catch(err) {
