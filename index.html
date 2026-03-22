@@ -1958,15 +1958,16 @@
       const canvasRef = React.useRef(null);
 
       // Auto-scale : mesure la largeur du canvas disponible
+      // Dépend de `phase` car le canvas div n'est rendu qu'après la home page
       React.useEffect(() => {
         if (!canvasRef.current) return;
-        const ro = new ResizeObserver(entries => {
-          const w = entries[0].contentRect.width;
-          setCanvasW(w);
+        setCanvasW(canvasRef.current.offsetWidth); // mesure immédiate
+        const ro = new ResizeObserver(() => {
+          if (canvasRef.current) setCanvasW(canvasRef.current.offsetWidth);
         });
         ro.observe(canvasRef.current);
         return () => ro.disconnect();
-      }, []);
+      }, [phase]);
 
       // Régénère les meubles du Mur B quand sa longueur change
       React.useEffect(() => { setCabsB(genCabs(wallLenB - ANGLE_W, colCfgB)); }, [wallLenB]);
