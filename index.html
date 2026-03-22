@@ -1986,20 +1986,22 @@
       // Scale pour tenir dans le canvas (padding 32px × 2 = 64)
       const availW   = Math.max(200, canvasW - 64);
       const naturalW = svgW * 2;
-      const scale    = naturalW > availW ? availW / naturalW : 1;
-      const dispW    = Math.round(naturalW * scale);
+      const scale    = availW / naturalW;
+      const dispW    = availW;
       const dispH    = Math.round(svgH * 2 * scale);
 
-      // Dimensions et scale pour le mode En L
-      // Le bloc angle (ANGLE_W) est inclus DANS la longueur de chaque mur — pas d'extension SVG
+      // Dimensions et scale pour le mode En L — largeurs proportionnelles aux longueurs de mur
       const svgWB    = wallLenB + C.MARGIN * 2;
-      const availWEach = Math.max(150, Math.floor((availW - 8) / 2)); // 8px de gap entre panneaux
-      const longerSvgW = Math.max(svgW, svgWB);
-      const lScale   = Math.min(1, availWEach / (longerSvgW * 2));
-      const lScaleB  = lScale;
-      const dispWA_l = Math.round(svgW * 2 * lScale);
+      const gap      = 8;
+      const totalLen = wallLen + wallLenB;
+      const ratioA   = totalLen > 0 ? wallLen / totalLen : 0.5;
+      const widthA   = Math.max(150, Math.round((availW - gap) * ratioA));
+      const widthB   = Math.max(150, availW - gap - widthA);
+      const lScale   = widthA / (svgW * 2);
+      const lScaleB  = widthB / (svgWB * 2);
+      const dispWA_l = widthA;
       const dispHA_l = Math.round(svgH * 2 * lScale);
-      const dispWB_l = Math.round(svgWB * 2 * lScaleB);
+      const dispWB_l = widthB;
       const dispHB_l = Math.round(svgH * 2 * lScaleB);
 
       const hasColFour = colTypes.some(t => t==='four');
