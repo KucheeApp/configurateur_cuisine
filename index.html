@@ -2243,10 +2243,8 @@
       const getSvgCmB = clientX => {
         const svg = svgRefB.current; if (!svg) return 0;
         const rect = svg.getBoundingClientRect();
-        // In doubleLineaire mode the SVG is CSS-mirrored, so we flip the X coordinate
-        // and there is no ANGLE_W offset
         if (layoutMode === 'doubleLineaire') {
-          return (rect.right - clientX) * svgWB / rect.width - C.MARGIN;
+          return (clientX - rect.left) * svgWB / rect.width - C.MARGIN;
         }
         return (clientX - rect.left) * svgWB / rect.width - C.MARGIN - ANGLE_W;
       };
@@ -3617,13 +3615,12 @@
                 const colsB      = getColPositions(effLenB2, colCfgB);
                 return (
                   <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start'}}>
-                    <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'6px',fontFamily:'Courier New,monospace'}}>MUR B <span style={{fontSize:'8px',color:'#bbb'}}>(vue miroir)</span></div>
+                    <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'6px',fontFamily:'Courier New,monospace'}}>MUR B</div>
                     <div style={{background:'white',boxShadow:'0 2px 24px rgba(0,0,0,0.10)',display:'inline-block',border:'1px solid #e8e8e8'}}>
                       <div style={{padding:'7px 14px',background:'#f9f9f9',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',fontSize:'7.5px',color:'#999',fontFamily:'monospace'}}>
                         <span>{T('svg.elevation')} — L={wallLenB}cm{colCfgB!=='none'?` · COL.${colCfgB}`:''}</span>
                         <span>{T('svg.dims')}</span>
                       </div>
-                      <div style={{transform:'scaleX(-1)'}}>
                         <svg ref={svgRefB}
                           viewBox={`0 0 ${svgWB} ${svgH}`} width={dispWB_dl} height={dispHB_dl}
                           xmlns="http://www.w3.org/2000/svg"
