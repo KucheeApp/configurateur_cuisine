@@ -1667,8 +1667,8 @@
               png:          pngB64,
             })
           });
-          const json = await res.json();
-          if (res.ok && json.ok !== false) {
+          const json = await res.json().catch(() => ({}));
+          if (res.ok) {
             setStatus('success');
           } else {
             console.error('leads error:', json.error || res.status);
