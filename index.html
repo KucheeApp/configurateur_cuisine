@@ -1654,10 +1654,11 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              revendeur_id: window.REVENDEUR_CONFIG?.revendeurId || null,
-              nom:          nom.trim(),
-              email:        email.trim(),
-              telephone:    tel.trim(),
+              revendeur_id:   window.REVENDEUR_CONFIG?.revendeurId || null,
+              nom:            nom.trim(),
+              email:          email.trim(),
+              email_verified: emailVerified,
+              telephone:      tel.trim(),
               ville:        ville.trim(),
               pays:         pays.trim(),
               message:      msg.trim() || null,
@@ -1667,10 +1668,10 @@
             })
           });
           const json = await res.json();
-          if (json.ok) {
+          if (res.ok && json.ok !== false) {
             setStatus('success');
           } else {
-            console.error('leads error:', json.error);
+            console.error('leads error:', json.error || res.status);
             setStatus('error');
           }
         } catch(err) {
