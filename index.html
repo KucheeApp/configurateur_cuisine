@@ -2927,10 +2927,10 @@
                 <Sec title={T('sec.columns')}>
                   {(() => {
                     const ColPicto = ({ cfg, active, onClick }) => {
-                      const W=58, H=38;
-                      const floorY = H-4;
-                      const cW=13, cTop=2, cH=floorY-cTop;
-                      const cabH=11, wtH=2;
+                      const W=44, H=28;
+                      const floorY = H-3;
+                      const cW=10, cTop=2, cH=floorY-cTop;
+                      const cabH=8, wtH=2;
                       const cabTop = floorY - cabH;
                       const wtTop  = cabTop - wtH;
                       const cf = active ? '#fff' : '#888';
@@ -2991,16 +2991,17 @@
                       </div>
                     </>);
                     if (layoutMode === 'doubleLineaire') return (<>
-                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>Mur A</div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'8px'}}>
-                        {['none','A','B','C','D','E'].map(c => (
+                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>MUR A</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'4px',marginBottom:'10px'}}>
+                        {['none','D','E','A','C','B'].map(c => (
                           <ColPicto key={c} cfg={c} active={colCfg===c}
                             onClick={() => { setColCfg(c); regenCabs(wallLen, c); setSelectedColIdx(null); }}/>
                         ))}
                       </div>
-                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>Mur B</div>
-                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'4px'}}>
-                        {['none','A','B','C','D','E'].map(c => (
+                      <div style={{borderTop:'1px solid #e8e8e8',margin:'0 0 10px'}}/>
+                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>MUR B</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'4px',marginBottom:'4px'}}>
+                        {['none','D','E','A','C','B'].map(c => (
                           <ColPicto key={c} cfg={c} active={colCfgB===c}
                             onClick={() => { setColCfgB(c); regenCabsB(wallLenB, c); }}/>
                         ))}
