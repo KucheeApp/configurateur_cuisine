@@ -1896,6 +1896,9 @@
       const [customColorUp,  setCustomColorUp]   = React.useState('#888888');
       const [customColorCol, setCustomColorCol]  = React.useState('#888888');
       const [locale,         setLocale]          = React.useState('fr');
+      const [layoutMode,     setLayoutMode]      = React.useState('lineaire');
+      const [wallLenB,       setWallLenB]        = React.useState(240);
+      const [sliderValB,     setSliderValB]      = React.useState(240);
 
       const T = (key, ...args) => {
         let s = (LANG[locale] ?? LANG.fr)[key] ?? LANG.fr[key] ?? key;
@@ -2412,7 +2415,28 @@
               ════════════════════════════════ */}
               {phase === 'measure' && (<>
 
-                <Sec title={T('sec.wallLen')}>
+                {/* ── Sélecteur d'implantation ── */}
+                <Sec title="Implantation">
+                  <div style={{display:'flex',gap:'6px'}}>
+                    {[
+                      {key:'lineaire', label:'Linéaire'},
+                      {key:'enL',      label:'En L'},
+                    ].map(({key, label}) => (
+                      <button key={key} onClick={() => setLayoutMode(key)}
+                        style={{flex:1,padding:'6px 0',fontSize:'10px',letterSpacing:'1px',
+                          fontFamily:'Courier New,monospace',cursor:'pointer',
+                          border: layoutMode===key ? '2px solid #222' : '1px solid #ccc',
+                          background: layoutMode===key ? '#222' : '#fff',
+                          color: layoutMode===key ? '#fff' : '#555',
+                          borderRadius:'2px',fontWeight: layoutMode===key ? 'bold' : 'normal',
+                          textTransform:'uppercase'}}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </Sec>
+
+                <Sec title={layoutMode === 'enL' ? 'Mur A' : T('sec.wallLen')}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                     <input type="range" min={180} max={600} step={1} value={sliderVal}
                       onChange={e => setSliderVal(+e.target.value)}
@@ -2431,6 +2455,29 @@
                     </span>
                   </div>
                 </Sec>
+
+                {layoutMode === 'enL' && (
+                  <Sec title="Mur B">
+                    <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                      <input type="range" min={120} max={600} step={1} value={sliderValB}
+                        onChange={e => setSliderValB(+e.target.value)}
+                        onMouseUp={e => {
+                          const snapped = Math.max(120, Math.min(600, Math.round(+e.target.value / 5) * 5));
+                          setSliderValB(snapped); setWallLenB(snapped);
+                        }}
+                        onTouchEnd={() => {
+                          const snapped = Math.max(120, Math.min(600, Math.round(sliderValB / 5) * 5));
+                          setSliderValB(snapped); setWallLenB(snapped);
+                        }}
+                        style={{flex:1}} />
+                      <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold',
+                        color: sliderValB !== wallLenB ? '#aaa' : 'inherit'}}>
+                        {sliderValB}cm
+                      </span>
+                    </div>
+                    <div style={{fontSize:'9px',color:'#aaa',marginTop:'4px',letterSpacing:'0.5px'}}>Minimum 120 cm</div>
+                  </Sec>
+                )}
 
                 {/* Pictos colonnes */}
                 <Sec title={T('sec.columns')}>
