@@ -759,12 +759,13 @@
 
     const finishCoeff = (finish) => FINISH_COEFF[finish?.category] ?? 1.00;
 
-    const calcPrice = ({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle }) => {
+    const calcPrice = ({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle, cabsB=[], colCfgB='none', wallLenB=0, layoutMode='lineaire' }) => {
       const cLow = finishCoeff(finishLower);
       const cUp  = finishCoeff(finishUpper);
       const cCol = finishCoeff(finishCol);
       const cDoor = doorStyle === 'frame' ? 1.17 : 1.00;
       let lower = 0, upper = 0, cols = 0;
+      // Mur A — meubles bas et hauts
       cabs.forEach(function(c) {
         const lTable = PRICING.lower[c.lowerType] || PRICING.lower.rangement;
         lower += priceLookup(lTable, c.w);
@@ -775,6 +776,20 @@
           upper += priceLookup(PRICING.hood, c.hoodW || 60);
         }
       });
+      // Mur B — meubles bas et hauts (mode L uniquement)
+      if (layoutMode === 'enL') {
+        cabsB.forEach(function(c) {
+          const lTable = PRICING.lower[c.lowerType] || PRICING.lower.rangement;
+          lower += priceLookup(lTable, c.w);
+          if (c.upperMode === 'upper') {
+            const uTable = PRICING.upper[c.upperType] || PRICING.upper.rangement;
+            upper += priceLookup(uTable, c.w);
+          } else if (c.upperMode === 'hood') {
+            upper += priceLookup(PRICING.hood, c.hoodW || 60);
+          }
+        });
+      }
+      // Colonnes Mur A
       getColPositions(wallLen, colCfg).forEach(function(_, i) {
         const ct = (colTypes && colTypes[i]) || 'colonne';
         const tbl = PRICING.col[ct] || PRICING.col.colonne;
@@ -784,11 +799,20 @@
         const tbl = PRICING.col[ec.colType] || PRICING.col.colonne;
         cols += priceLookup(tbl, ec.w || C.COL_W);
       });
+      // Colonnes Mur B (mode L uniquement)
+      if (layoutMode === 'enL' && colCfgB !== 'none') {
+        getColPositions(wallLenB - 60, colCfgB).forEach(function() {
+          cols += priceLookup(PRICING.col.colonne, C.COL_W);
+        });
+      }
       lower = Math.round(lower * cLow * cDoor);
       upper = Math.round(upper * cUp  * cDoor);
       cols  = Math.round(cols  * cCol * cDoor);
-      const totalLowerW = cabs.reduce((s, c) => s + c.w, 0) / 100;
-      const worktop = Math.round(totalLowerW * PRICING.worktop.low);
+      // Plan de travail : longueur totale du L moins le bloc angle aveugle (60cm)
+      const worktopLen = layoutMode === 'enL'
+        ? (wallLen + wallLenB - 60) / 100
+        : cabs.reduce((s, c) => s + c.w, 0) / 100;
+      const worktop = Math.round(worktopLen * PRICING.worktop.low);
       const subtotal = lower + upper + cols;
       return { lower, upper, cols, worktop, total: subtotal + worktop };
     };
@@ -2631,7 +2655,7 @@
       };
 
       // ── Rendu principal ───────────────────────────────────────────────
-      const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle });
+      const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle, cabsB, colCfgB, wallLenB, layoutMode });
       const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol, T, locale });
 
       return (
