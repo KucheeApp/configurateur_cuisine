@@ -2034,7 +2034,8 @@
       // Régénère les meubles lors du basculement de mode d'implantation
       React.useEffect(() => {
         if (layoutMode === 'enL') {
-          regenCabs(wallLen - ANGLE_W, colCfg);
+          setColCfg('none');
+          regenCabs(wallLen - ANGLE_W, 'none');
           regenCabsB(wallLenB - ANGLE_W, colCfgB);
         } else {
           regenCabs(wallLen, colCfg);
