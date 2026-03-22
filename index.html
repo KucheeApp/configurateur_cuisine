@@ -776,8 +776,8 @@
           upper += priceLookup(PRICING.hood, c.hoodW || 60);
         }
       });
-      // Mur B — meubles bas et hauts (mode L uniquement)
-      if (layoutMode === 'enL') {
+      // Mur B — meubles bas et hauts (mode L et Double linéaire)
+      if (layoutMode === 'enL' || layoutMode === 'doubleLineaire') {
         cabsB.forEach(function(c) {
           const lTable = PRICING.lower[c.lowerType] || PRICING.lower.rangement;
           lower += priceLookup(lTable, c.w);
@@ -799,18 +799,21 @@
         const tbl = PRICING.col[ec.colType] || PRICING.col.colonne;
         cols += priceLookup(tbl, ec.w || C.COL_W);
       });
-      // Colonnes Mur B (mode L uniquement)
-      if (layoutMode === 'enL' && colCfgB !== 'none') {
-        getColPositions(wallLenB - 60, colCfgB).forEach(function() {
+      // Colonnes Mur B (mode L et Double linéaire)
+      if ((layoutMode === 'enL' || layoutMode === 'doubleLineaire') && colCfgB !== 'none') {
+        const effLenB_price = layoutMode === 'enL' ? wallLenB - 60 : wallLenB;
+        getColPositions(effLenB_price, colCfgB).forEach(function() {
           cols += priceLookup(PRICING.col.colonne, C.COL_W);
         });
       }
       lower = Math.round(lower * cLow * cDoor);
       upper = Math.round(upper * cUp  * cDoor);
       cols  = Math.round(cols  * cCol * cDoor);
-      // Plan de travail : longueur totale du L moins le bloc angle aveugle (60cm)
+      // Plan de travail
       const worktopLen = layoutMode === 'enL'
         ? (wallLen + wallLenB - 60) / 100
+        : layoutMode === 'doubleLineaire'
+        ? (wallLen + wallLenB) / 100
         : cabs.reduce((s, c) => s + c.w, 0) / 100;
       const worktop = Math.round(worktopLen * PRICING.worktop.low);
       const subtotal = lower + upper + cols;
@@ -2012,6 +2015,14 @@
       const dispWB_l = widthB;
       const dispHB_l = Math.round(svgH * 2 * lScaleB);
 
+      // Double linéaire : même échelle unifiée basée sur max(wallLenA, wallLenB)
+      const longerSvgW_dl = Math.max(svgW, svgWB);
+      const dlScale   = availW / (longerSvgW_dl * 2);
+      const dispWA_dl = Math.round(svgW * 2 * dlScale);
+      const dispHA_dl = Math.round(svgH * 2 * dlScale);
+      const dispWB_dl = Math.round(svgWB * 2 * dlScale);
+      const dispHB_dl = Math.round(svgH * 2 * dlScale);
+
       const hasColFour = colTypes.some(t => t==='four');
       const hasEvier   = cabs.some(c => EVIER_TYPES.includes(c.lowerType));
       const hasLV      = cabs.some(c => c.lowerType==='lv');
@@ -2044,6 +2055,9 @@
           setColCfg('none');
           regenCabs(wallLen - ANGLE_W, 'none');
           regenCabsB(wallLenB - ANGLE_W, colCfgB);
+        } else if (layoutMode === 'doubleLineaire') {
+          regenCabs(wallLen, colCfg);
+          regenCabsB(wallLenB, colCfgB);
         } else {
           regenCabs(wallLen, colCfg);
         }
@@ -2127,7 +2141,7 @@
 
       const updWithReflowB = (id, changes) => {
         const idx = cabsB.findIndex(c => c.id===id); if (idx===-1) return;
-        const effLenB2 = wallLenB - ANGLE_W;
+        const effLenB2 = layoutMode === 'doubleLineaire' ? wallLenB : wallLenB - ANGLE_W;
         const [start, end] = getCabRange(effLenB2, colCfgB);
         // Si meuble angle figé sur Mur B, bloquer son resize direct
         const sortedForAngleB = [...cabsB].sort((a,b)=>a.x-b.x);
@@ -2173,7 +2187,8 @@
         if (idx === -1) return;
         const targetIdx = idx + dir;
         if (targetIdx < 0 || targetIdx >= cabsB.length) return;
-        const [start] = getCabRange(wallLenB - ANGLE_W, colCfgB);
+        const effLenBswap = layoutMode === 'doubleLineaire' ? wallLenB : wallLenB - ANGLE_W;
+        const [start] = getCabRange(effLenBswap, colCfgB);
         const newCabs = [...cabsB];
         const a = { ...newCabs[idx],       w: newCabs[targetIdx].w, lowerType: newCabs[targetIdx].lowerType, upperMode: newCabs[targetIdx].upperMode, upperType: newCabs[targetIdx].upperType, hoodW: newCabs[targetIdx].hoodW, hasPlaque: newCabs[targetIdx].hasPlaque };
         const b = { ...newCabs[targetIdx], w: newCabs[idx].w,       lowerType: newCabs[idx].lowerType,       upperMode: newCabs[idx].upperMode,       upperType: newCabs[idx].upperType,       hoodW: newCabs[idx].hoodW,       hasPlaque: newCabs[idx].hasPlaque };
@@ -2212,7 +2227,7 @@
       };
 
       const addWinB = () => {
-        const effLenB = wallLenB - ANGLE_W;
+        const effLenB = layoutMode === 'doubleLineaire' ? wallLenB : wallLenB - ANGLE_W;
         if (winWB < 30) { flash('error', T('flash.winMinWidth')); return; }
         if (winPosB + winWB > effLenB) { flash('error', T('flash.winOverflow')); return; }
         setWinsB(p => [...p, {id:winIdCounterB, pos:winPosB, w:winWB}]);
@@ -2228,6 +2243,11 @@
       const getSvgCmB = clientX => {
         const svg = svgRefB.current; if (!svg) return 0;
         const rect = svg.getBoundingClientRect();
+        // In doubleLineaire mode the SVG is CSS-mirrored, so we flip the X coordinate
+        // and there is no ANGLE_W offset
+        if (layoutMode === 'doubleLineaire') {
+          return (rect.right - clientX) * svgWB / rect.width - C.MARGIN;
+        }
         return (clientX - rect.left) * svgWB / rect.width - C.MARGIN - ANGLE_W;
       };
       const clampWinPos = (desired, ww) => {
@@ -2270,7 +2290,7 @@
         }
       };
       const onSvgMouseMoveB = e => {
-        const effLenB = wallLenB - ANGLE_W;
+        const effLenB = layoutMode === 'doubleLineaire' ? wallLenB : wallLenB - ANGLE_W;
         if (draggingWinB) {
           const dx = getSvgCmB(e.clientX) - draggingWinB.startCm;
           setWinsB(prev => prev.map(w => w.id===draggingWinB.id
@@ -2681,7 +2701,9 @@
 {window.REVENDEUR_CONFIG?.logoUrl && (
   <img src={window.REVENDEUR_CONFIG.logoUrl} alt={window.REVENDEUR_CONFIG.nomCommercial || ''} style={{height:'28px',maxWidth:'120px',objectFit:'contain',marginLeft:'8px'}} />
 )}            <span style={{color:'#ddd',fontSize:'12px'}}>|</span>
-            <span style={{fontSize:'14px',letterSpacing:'5px',color:'#111',fontWeight:'bold'}}>{T('hdr.title')}</span>
+            <span style={{fontSize:'14px',letterSpacing:'5px',color:'#111',fontWeight:'bold'}}>
+              {layoutMode === 'doubleLineaire' ? 'DOUBLE LINÉAIRE' : layoutMode === 'enL' ? 'EN L CUISINE' : T('hdr.title')}
+            </span>
             <span style={{fontSize:'9px',color:'#bbb',letterSpacing:'2px'}}>{T('hdr.subtitle')}</span>
             {statusMsg && (
               <div style={{marginLeft:'auto',fontSize:'8px',padding:'3px 10px',border:'1px solid',borderRadius:'2px',
@@ -2757,16 +2779,18 @@
                   <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px'}}>En L</div>
                 </div>
 
-                {/* ── Double linéaire — bientôt ── */}
-                <div style={{width:'180px',padding:'22px 14px 18px',border:'1px solid #ddd',borderRadius:'2px',cursor:'not-allowed',textAlign:'center',background:'#fafafa',opacity:0.55,position:'relative'}}>
-                  <div style={{position:'absolute',top:'8px',right:'8px',background:'#999',color:'#fff',fontSize:'6px',padding:'2px 5px',letterSpacing:'1px',textTransform:'uppercase',borderRadius:'2px'}}>Bientôt</div>
+                {/* ── Double linéaire ── */}
+                <div onClick={() => { setLayoutMode('doubleLineaire'); setPhase('measure'); }}
+                  style={{width:'180px',padding:'22px 14px 18px',border:'1px solid #222',borderRadius:'2px',cursor:'pointer',textAlign:'center',background:'#fff',position:'relative',transition:'box-shadow 0.15s'}}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.13)'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow=''}>
                   <svg width="120" height="64" viewBox="0 0 120 64" style={{display:'block',margin:'0 auto'}}>
-                    <rect x="4" y="4" width="112" height="18" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
-                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="4" x2={x} y2="22" stroke="#bbb" strokeWidth="0.8"/>)}
-                    <rect x="4" y="42" width="112" height="18" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
-                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="42" x2={x} y2="60" stroke="#bbb" strokeWidth="0.8"/>)}
+                    <rect x="4" y="4" width="112" height="18" fill="#ececec" stroke="#555" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="4" x2={x} y2="22" stroke="#888" strokeWidth="0.8"/>)}
+                    <rect x="4" y="42" width="112" height="18" fill="#ececec" stroke="#555" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="42" x2={x} y2="60" stroke="#888" strokeWidth="0.8"/>)}
                   </svg>
-                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px',color:'#aaa'}}>Double linéaire</div>
+                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px'}}>Double linéaire</div>
                 </div>
 
                 {/* ── U — bientôt ── */}
@@ -2849,7 +2873,7 @@
               ════════════════════════════════ */}
               {phase === 'measure' && (<>
 
-                <Sec title={layoutMode === 'enL' ? 'Mur A' : T('sec.wallLen')}>
+                <Sec title={(layoutMode === 'enL' || layoutMode === 'doubleLineaire') ? 'Mur A' : T('sec.wallLen')}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                     <input type="range" min={180} max={600} step={1} value={sliderVal}
                       onChange={e => setSliderVal(+e.target.value)}
@@ -2871,7 +2895,7 @@
                   </div>
                 </Sec>
 
-                {layoutMode === 'enL' && (
+                {(layoutMode === 'enL' || layoutMode === 'doubleLineaire') && (
                   <Sec title="Mur B">
                     <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                       <input type="range" min={120} max={600} step={1} value={sliderValB}
@@ -2879,10 +2903,12 @@
                         onMouseUp={e => {
                           const snapped = Math.max(120, Math.min(600, Math.round(+e.target.value / 5) * 5));
                           setSliderValB(snapped); setWallLenB(snapped);
+                          if (layoutMode === 'doubleLineaire') regenCabsB(snapped, colCfgB);
                         }}
                         onTouchEnd={() => {
                           const snapped = Math.max(120, Math.min(600, Math.round(sliderValB / 5) * 5));
                           setSliderValB(snapped); setWallLenB(snapped);
+                          if (layoutMode === 'doubleLineaire') regenCabsB(snapped, colCfgB);
                         }}
                         style={{flex:1}} />
                       <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold',
@@ -2891,6 +2917,11 @@
                       </span>
                     </div>
                     <div style={{fontSize:'9px',color:'#aaa',marginTop:'4px',letterSpacing:'0.5px'}}>Minimum 120 cm</div>
+                    {layoutMode === 'doubleLineaire' && (
+                      <div style={{fontSize:'10px',color:'#aaa',fontFamily:'Courier New,monospace',margin:'6px 0 0 0'}}>
+                        ↕ Allée recommandée : ≥ 120 cm
+                      </div>
+                    )}
                   </Sec>
                 )}
 
@@ -2961,6 +2992,22 @@
                         ))}
                       </div>
                     </>);
+                    if (layoutMode === 'doubleLineaire') return (<>
+                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>Mur A</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'8px'}}>
+                        {['none','A','B','C','D','E'].map(c => (
+                          <ColPicto key={c} cfg={c} active={colCfg===c}
+                            onClick={() => { setColCfg(c); regenCabs(wallLen, c); setSelectedColIdx(null); }}/>
+                        ))}
+                      </div>
+                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>Mur B</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'4px'}}>
+                        {['none','A','B','C','D','E'].map(c => (
+                          <ColPicto key={c} cfg={c} active={colCfgB===c}
+                            onClick={() => { setColCfgB(c); regenCabsB(wallLenB, c); }}/>
+                        ))}
+                      </div>
+                    </>);
                     return (
                       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'4px'}}>
                         {['none','A','B','C','D','E'].map(c => (
@@ -2974,8 +3021,8 @@
 
                 {/* Fenêtres */}
                 <Sec title={T('sec.windows')}>
-                  {/* Toggle Mur A / Mur B en mode L */}
-                  {layoutMode === 'enL' && (
+                  {/* Toggle Mur A / Mur B en mode L ou Double linéaire */}
+                  {(layoutMode === 'enL' || layoutMode === 'doubleLineaire') && (
                     <div style={{display:'flex',gap:'4px',marginBottom:'8px'}}>
                       {['A','B'].map(wall => (
                         <button key={wall} onClick={() => setActiveWinWall(wall)}
@@ -2991,10 +3038,10 @@
                     </div>
                   )}
                   {/* Liste des fenêtres du mur actif */}
-                  {(layoutMode === 'enL' && activeWinWall === 'B' ? winsB : wins).map(w => {
-                    const isWallB = layoutMode === 'enL' && activeWinWall === 'B';
+                  {((layoutMode === 'enL' || layoutMode === 'doubleLineaire') && activeWinWall === 'B' ? winsB : wins).map(w => {
+                    const isWallB = (layoutMode === 'enL' || layoutMode === 'doubleLineaire') && activeWinWall === 'B';
                     const isSel = isWallB ? selectedWinIdB === w.id : selectedWinId === w.id;
-                    const maxWall = isWallB ? wallLenB - ANGLE_W : effLenA;
+                    const maxWall = isWallB ? (layoutMode === 'doubleLineaire' ? wallLenB : wallLenB - ANGLE_W) : effLenA;
                     return (
                       <div key={w.id}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
@@ -3039,17 +3086,17 @@
                     );
                   })}
                   <div style={{fontSize:'10px',color:'#bbb',marginBottom:'6px'}}>{T('win.drag')}</div>
-                  {layoutMode === 'enL' && activeWinWall === 'B' ? (<>
+                  {(layoutMode === 'enL' || layoutMode === 'doubleLineaire') && activeWinWall === 'B' ? (<>
                     <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
                       <div style={{flex:1}}>
                         <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
                         <input type="number" value={winPosB} onChange={e => setWinPosB(+e.target.value)}
-                          onBlur={e => setWinPosB(Math.max(0, Math.min(wallLenB-ANGLE_W-winWB, +e.target.value)))} />
+                          onBlur={e => { const mx = layoutMode==='doubleLineaire' ? wallLenB : wallLenB-ANGLE_W; setWinPosB(Math.max(0, Math.min(mx-winWB, +e.target.value))); }} />
                       </div>
                       <div style={{flex:1}}>
                         <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
                         <input type="number" value={winWB} onChange={e => setWinWB(+e.target.value)}
-                          onBlur={e => setWinWB(Math.max(30, Math.min(wallLenB-ANGLE_W-winPosB, +e.target.value)))} />
+                          onBlur={e => { const mx = layoutMode==='doubleLineaire' ? wallLenB : wallLenB-ANGLE_W; setWinWB(Math.max(30, Math.min(mx-winPosB, +e.target.value))); }} />
                       </div>
                     </div>
                     <Btn onClick={addWinB} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
@@ -3100,13 +3147,13 @@
                   </Sec>
                 )}
 
-                {/* En mode L — panneau Mur B si un meuble B est sélectionné */}
-                {layoutMode === 'enL' && (selLowerIdB !== null || selUpperIdB !== null) && selectedColIdx === null && (
+                {/* En mode L ou Double linéaire — panneau Mur B si un meuble B est sélectionné */}
+                {(layoutMode === 'enL' || layoutMode === 'doubleLineaire') && (selLowerIdB !== null || selUpperIdB !== null) && selectedColIdx === null && (
                   selUpperIdB !== null ? <UpperPanelB /> : <LowerPanelB />
                 )}
 
                 {/* Panneau Mur A (défaut) */}
-                {!(layoutMode === 'enL' && (selLowerIdB !== null || selUpperIdB !== null)) && selectedColIdx===null && (selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
+                {!((layoutMode === 'enL' || layoutMode === 'doubleLineaire') && (selLowerIdB !== null || selUpperIdB !== null)) && selectedColIdx===null && (selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
                   const ec = extraCols.find(c=>c.id===selectedExtraColId);
                   return (
                     <Sec title={`${T('sec.extraCol')} · ${ec.w}cm`}>
@@ -3268,12 +3315,12 @@
             <div ref={canvasRef}
               style={{flex:1,background:'#f2f2f2',padding:'32px',overflowX:'auto',overflowY:'auto',display:'flex',flexDirection:'column',alignItems:'flex-start'}}
               onClick={clearSel}>
-              {/* ── Flex row : contient Mur A + coin + Mur B en mode L ── */}
-              <div style={{display:'flex',alignItems:'flex-start',gap:'0'}}>
+              {/* ── Flex row (enL) ou column (doubleLineaire) : Mur A + Mur B ── */}
+              <div style={{display:'flex',flexDirection:layoutMode==='doubleLineaire'?'column':'row',alignItems:'flex-start',gap:'0'}}>
 
               {/* ── Colonne Mur A ── */}
               <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
-              {layoutMode==='enL' && (
+              {(layoutMode==='enL'||layoutMode==='doubleLineaire') && (
                 <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'6px',fontFamily:'Courier New,monospace'}}>MUR A</div>
               )}
               <div style={{background:'white',boxShadow:'0 2px 24px rgba(0,0,0,0.10)',display:'inline-block',border:'1px solid #e8e8e8'}}
@@ -3286,7 +3333,8 @@
 
                 <svg ref={svgRef}
                   viewBox={`0 0 ${svgW} ${svgH}`}
-                  width={layoutMode==='enL' ? dispWA_l : dispW} height={layoutMode==='enL' ? dispHA_l : dispH}
+                  width={layoutMode==='enL' ? dispWA_l : layoutMode==='doubleLineaire' ? dispWA_dl : dispW}
+                  height={layoutMode==='enL' ? dispHA_l : layoutMode==='doubleLineaire' ? dispHA_dl : dispH}
                   xmlns="http://www.w3.org/2000/svg"
                   style={{display:'block',cursor:draggingWin?'grabbing':'default',userSelect:'none'}}
                   onMouseMove={onSvgMouseMove} onMouseUp={onSvgMouseUp} onMouseLeave={onSvgMouseUp}>
@@ -3446,6 +3494,13 @@
               </div>
               </div>{/* fin col Mur A */}
 
+              {/* ── Distance indicateur — Double linéaire uniquement ── */}
+              {layoutMode === 'doubleLineaire' && (
+                <div style={{padding:'8px 0',fontSize:'10px',color:'#999',fontFamily:'Courier New,monospace',textAlign:'center',width:'100%'}}>
+                  ↕ Allée recommandée : ≥ 120cm
+                </div>
+              )}
+
               {/* ── Gap jonction entre Mur A et Mur B ── */}
               {layoutMode === 'enL' && <div style={{width:'8px',flexShrink:0}}/>}
 
@@ -3555,7 +3610,93 @@
                 );
               })()}
 
-              </div>{/* fin flex row panneaux */}
+              {/* ── Colonne Mur B — doubleLineaire ── */}
+              {layoutMode === 'doubleLineaire' && (() => {
+                const effLenB2   = wallLenB;
+                const [csB, ceB] = getCabRange(effLenB2, colCfgB);
+                const colsB      = getColPositions(effLenB2, colCfgB);
+                return (
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start'}}>
+                    <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'6px',fontFamily:'Courier New,monospace'}}>MUR B <span style={{fontSize:'8px',color:'#bbb'}}>(vue miroir)</span></div>
+                    <div style={{background:'white',boxShadow:'0 2px 24px rgba(0,0,0,0.10)',display:'inline-block',border:'1px solid #e8e8e8'}}>
+                      <div style={{padding:'7px 14px',background:'#f9f9f9',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',fontSize:'7.5px',color:'#999',fontFamily:'monospace'}}>
+                        <span>{T('svg.elevation')} — L={wallLenB}cm{colCfgB!=='none'?` · COL.${colCfgB}`:''}</span>
+                        <span>{T('svg.dims')}</span>
+                      </div>
+                      <div style={{transform:'scaleX(-1)'}}>
+                        <svg ref={svgRefB}
+                          viewBox={`0 0 ${svgWB} ${svgH}`} width={dispWB_dl} height={dispHB_dl}
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{display:'block',userSelect:'none',cursor:draggingWinB?'grabbing':'default'}}
+                          onMouseMove={onSvgMouseMoveB} onMouseUp={onSvgMouseUpB} onMouseLeave={onSvgMouseUpB}>
+                          {/* Grille */}
+                          <g>
+                            {Array.from({length:Math.ceil(svgWB/10)+1},(_,i)=>
+                              <line key={`v${i}`} x1={i*10} y1={0} x2={i*10} y2={svgH} stroke="#f0f0f0" strokeWidth={0.3}/>)}
+                            {Array.from({length:Math.ceil(svgH/10)+1},(_,i)=>
+                              <line key={`h${i}`} x1={0} y1={i*10} x2={svgWB} y2={i*10} stroke="#f0f0f0" strokeWidth={0.3}/>)}
+                          </g>
+
+                          {/* Mur */}
+                          <rect x={C.MARGIN} y={COL_TOP_Y} width={wallLenB} height={C.COL_H} fill="#fafafa"/>
+                          <line x1={C.MARGIN} y1={COL_TOP_Y} x2={C.MARGIN} y2={FLOOR_Y} stroke="#555" strokeWidth={0.8}/>
+                          <line x1={C.MARGIN+wallLenB} y1={COL_TOP_Y} x2={C.MARGIN+wallLenB} y2={FLOOR_Y} stroke="#555" strokeWidth={0.8}/>
+                          <line x1={C.MARGIN} y1={FLOOR_Y} x2={C.MARGIN+wallLenB} y2={FLOOR_Y} stroke="#222" strokeWidth={2.5}/>
+
+                          {/* Fenêtres Mur B */}
+                          <g>{winsB.map(w => <WinSvg key={w.id} win={w}
+                            onDragStart={onWinDragStartB} onResizeStart={onWinResizeStartB}
+                            onSelect={id => setSelectedWinIdB(prev => prev===id ? null : id)}
+                            isDragging={draggingWinB?.id===w.id} isResizing={resizingWinB?.id===w.id}
+                            isSelected={selectedWinIdB===w.id} />)}</g>
+
+                          {/* Colonnes Mur B */}
+                          <g>{colsB.map((cx,i) => {
+                            const isRight = colCfgB==='E'||(colCfgB==='B'&&i===colsB.length-1);
+                            return <ColSvg key={i} xPos={cx} doorStyle={doorStyle} idx={i} isLeft={!isRight}
+                              colType={'colonne'} selected={false} colFill={getFacadeFill(finishCol)}
+                              onClick={()=>{}} />;
+                          })}</g>
+
+                          {/* Meubles hauts */}
+                          <g>{cabsB.map(c=><UpperSvg key={c.id} cab={c} doorStyle={doorStyle} wins={winsB}
+                            selected={selUpperIdB===c.id} facadeFill={getFacadeFill(finishUpper)}
+                            onSelect={() => { setSelUpperIdB(prev=>prev===c.id?null:c.id); setSelLowerIdB(null); }}/>)}</g>
+
+                          {/* Meubles bas */}
+                          <g>{cabsB.map((c,idx)=>{
+                            const isLowerSelB = selLowerIdB===c.id;
+                            return <LowerSvg key={c.id} cab={c}
+                              selected={isLowerSelB}
+                              onSelect={() => { setSelLowerIdB(prev=>prev===c.id?null:c.id); setSelUpperIdB(null); }}
+                              doorStyle={doorStyle} facadeFill={getFacadeFill(finishLower)}
+                              canSwapLeft={isLowerSelB && idx > 0}
+                              canSwapRight={isLowerSelB && idx < cabsB.length-1}
+                              onSwapLeft={() => swapCabB(c.id, -1)}
+                              onSwapRight={() => swapCabB(c.id, +1)}
+                              isAngle={false}
+                              angleCorner="left"/>;
+                          })}</g>
+
+                          {/* Plinthe */}
+                          {ceB > csB && <rect x={C.MARGIN+csB} y={svgY(C.PLINTH_H)} width={ceB-csB} height={C.PLINTH_H}
+                            rx={0.5} fill="#e8e8e8" stroke="#555" strokeWidth={0.8}/>}
+
+                          {/* Cotation */}
+                          <g>
+                            <line x1={C.MARGIN} y1={svgH-8} x2={C.MARGIN+wallLenB} y2={svgH-8} stroke="#888" strokeWidth={0.7}/>
+                            <line x1={C.MARGIN} y1={svgH-12} x2={C.MARGIN} y2={svgH-4} stroke="#888" strokeWidth={0.7}/>
+                            <line x1={C.MARGIN+wallLenB} y1={svgH-12} x2={C.MARGIN+wallLenB} y2={svgH-4} stroke="#888" strokeWidth={0.7}/>
+                            <text x={C.MARGIN+wallLenB/2} y={svgH-1} textAnchor="middle" fontSize={7.5} fill="#555" fontFamily="Courier New,monospace">{wallLenB} cm</text>
+                          </g>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              </div>{/* fin flex row/column panneaux */}
 
               {/* Légende */}
               <div style={{display:'flex',gap:'16px',marginTop:'12px',fontSize:'11px',color:'#999',flexWrap:'wrap'}}>
@@ -3566,6 +3707,8 @@
                 <span>◼ {T('leg.col')}</span>
                 {Math.abs(diff)<=0.5 && cabs.length>0 && (
                   layoutMode === 'enL'
+                    ? <span style={{color:'#1a7a3a',fontWeight:'bold'}}>MUR A : {wallLen}cm · MUR B : {wallLenB}cm</span>
+                    : layoutMode === 'doubleLineaire'
                     ? <span style={{color:'#1a7a3a',fontWeight:'bold'}}>MUR A : {wallLen}cm · MUR B : {wallLenB}cm</span>
                     : <span style={{color:'#1a7a3a',fontWeight:'bold'}}>{T('leg.ok')} · {wallLen}cm</span>
                 )}
