@@ -1022,8 +1022,8 @@
       );
     });
 
-    const WinSvg = ({ win, onDragStart, onResizeStart, onSelect, isDragging, isResizing, isSelected }) => {
-      const x = win.pos + C.MARGIN;
+    const WinSvg = ({ win, onDragStart, onResizeStart, onSelect, isDragging, isResizing, isSelected, xOffset=0 }) => {
+      const x = win.pos + C.MARGIN + xOffset;
       const yT = svgY(190), yB = svgY(93), h = yB - yT;
       const gripW = 6, gripH = 16;
       const active = isDragging || isResizing;
@@ -1899,6 +1899,21 @@
       const [layoutMode,     setLayoutMode]      = React.useState('lineaire');
       const [wallLenB,       setWallLenB]        = React.useState(240);
       const [sliderValB,     setSliderValB]      = React.useState(240);
+      const [cabsB,          setCabsB]           = React.useState(() => genCabs(240, 'none'));
+      const [colCfgB,        setColCfgB]         = React.useState('none');
+      const [accesAngle,     setAccesAngle]      = React.useState(null); // null | 'A' | 'B'
+      const [selLowerIdB,    setSelLowerIdB]     = React.useState(null);
+      const [selUpperIdB,    setSelUpperIdB]     = React.useState(null);
+      const [winsB,          setWinsB]           = React.useState([]);
+      const [winIdCounterB,  setWinIdCounterB]   = React.useState(0);
+      const [winPosB,        setWinPosB]         = React.useState(60);
+      const [winWB,          setWinWB]           = React.useState(90);
+      const [activeWinWall,  setActiveWinWall]   = React.useState('A');
+      const [draggingWinB,   setDraggingWinB]    = React.useState(null);
+      const [resizingWinB,   setResizingWinB]    = React.useState(null);
+      const [selectedWinIdB, setSelectedWinIdB]  = React.useState(null);
+
+      const ANGLE_W = 60; // largeur fixe du bloc angle en cm
 
       const T = (key, ...args) => {
         let s = (LANG[locale] ?? LANG.fr)[key] ?? LANG.fr[key] ?? key;
@@ -1907,6 +1922,7 @@
       };
 
       const svgRef    = React.useRef(null);
+      const svgRefB   = React.useRef(null);
       const canvasRef = React.useRef(null);
 
       // Auto-scale : mesure la largeur du canvas disponible
@@ -1920,10 +1936,14 @@
         return () => ro.disconnect();
       }, []);
 
+      // Régénère les meubles du Mur B quand sa longueur change
+      React.useEffect(() => { setCabsB(genCabs(wallLenB - ANGLE_W, colCfgB)); }, [wallLenB]);
+
       const selLower = cabs.find(c => c.id === selLowerId) ?? null;
       const selUpper = cabs.find(c => c.id === selUpperId) ?? null;
-      const cols     = React.useMemo(() => getColPositions(wallLen, colCfg), [wallLen, colCfg]);
-      const [cs, ce] = React.useMemo(() => getCabRange(wallLen, colCfg), [wallLen, colCfg]);
+      const effLenA  = layoutMode === 'enL' ? wallLen - ANGLE_W : wallLen;
+      const cols     = React.useMemo(() => getColPositions(effLenA, colCfg), [effLenA, colCfg]);
+      const [cs, ce] = React.useMemo(() => getCabRange(effLenA, colCfg), [effLenA, colCfg]);
       const usedW    = React.useMemo(() => cabs.reduce((a,c) => a+c.w, 0), [cabs]);
       const diff     = usedW - (ce - cs);
 
@@ -1938,11 +1958,29 @@
       const dispW    = Math.round(naturalW * scale);
       const dispH    = Math.round(svgH * 2 * scale);
 
+      // Dimensions et scale pour le mode En L
+      // Le bloc angle (ANGLE_W) est inclus DANS la longueur de chaque mur — pas d'extension SVG
+      const svgWB    = wallLenB + C.MARGIN * 2;
+      const availWEach = Math.max(150, Math.floor((availW - 8) / 2)); // 8px de gap entre panneaux
+      const lScale   = Math.min(1, availWEach / (svgW * 2));
+      const lScaleB  = Math.min(1, availWEach / (svgWB * 2));
+      const dispWA_l = Math.round(svgW * 2 * lScale);
+      const dispHA_l = Math.round(svgH * 2 * lScale);
+      const dispWB_l = Math.round(svgWB * 2 * lScaleB);
+      const dispHB_l = Math.round(svgH * 2 * lScaleB);
+
       const hasColFour = colTypes.some(t => t==='four');
       const hasEvier   = cabs.some(c => EVIER_TYPES.includes(c.lowerType));
       const hasLV      = cabs.some(c => c.lowerType==='lv');
       const hasLl      = cabs.some(c => c.lowerType==='ll');
       const hasHood    = cabs.some(c => c.upperMode==='hood');
+
+      const selLowerB  = cabsB.find(c => c.id === selLowerIdB) ?? null;
+      const selUpperB  = cabsB.find(c => c.id === selUpperIdB) ?? null;
+      const hasEvierB  = cabsB.some(c => EVIER_TYPES.includes(c.lowerType));
+      const hasLVB     = cabsB.some(c => c.lowerType==='lv');
+      const hasLlB     = cabsB.some(c => c.lowerType==='ll');
+      const hasHoodB   = cabsB.some(c => c.upperMode==='hood');
 
       const flash = (type, text) => { setStatusMsg({type, text}); setTimeout(() => setStatusMsg(null), 3000); };
 
@@ -1953,9 +1991,24 @@
         setSelectedColIdx(null);
       };
 
+      const regenCabsB = (wl, cfg) => {
+        setCabsB(genCabs(wl, cfg)); setSelLowerIdB(null); setSelUpperIdB(null);
+      };
+
+      // Régénère les meubles lors du basculement de mode d'implantation
+      React.useEffect(() => {
+        if (layoutMode === 'enL') {
+          regenCabs(wallLen - ANGLE_W, colCfg);
+          regenCabsB(wallLenB - ANGLE_W, colCfgB);
+        } else {
+          regenCabs(wallLen, colCfg);
+        }
+      }, [layoutMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
       const updWithReflow = (id, changes) => {
         const idx = cabs.findIndex(c => c.id===id); if (idx===-1) return;
-        const [start, end] = getCabRange(wallLen, colCfg);
+        const effLen = layoutMode === 'enL' ? wallLen - ANGLE_W : wallLen;
+        const [start, end] = getCabRange(effLen, colCfg);
         const totalZone = (end - start) - extraCols.filter(ec => ec.x >= start && ec.x + ec.w <= end).reduce((s, ec) => s + ec.w, 0);
 
         // Applique le changement sur le meuble cible
@@ -2019,14 +2072,68 @@
         setCabs(repackCabs(newCabs, start, extraCols));
       };
 
-      const upd = (id, ch) => setCabs(p => p.map(c => c.id===id ? {...c,...ch} : c));
+      const upd  = (id, ch) => setCabs(p => p.map(c => c.id===id ? {...c,...ch} : c));
+      const updB = (id, ch) => setCabsB(p => p.map(c => c.id===id ? {...c,...ch} : c));
+
+      const updWithReflowB = (id, changes) => {
+        const idx = cabsB.findIndex(c => c.id===id); if (idx===-1) return;
+        const effLenB2 = wallLenB - ANGLE_W;
+        const [start, end] = getCabRange(effLenB2, colCfgB);
+        const totalZone = end - start;
+        let newCabs = cabsB.map(c => c.id===id ? {...c,...changes} : c);
+        if (changes.w !== undefined) {
+          let working = [...newCabs];
+          const sumAfter = working.reduce((a,c) => a + c.w, 0);
+          const targetIsLast = working[working.length - 1].id === id;
+          if (targetIsLast && sumAfter < totalZone) {
+            let gap = totalZone - sumAfter;
+            while (gap >= 15) {
+              const slice = gap >= 60 ? 60 : gap >= 45 ? 45 : gap;
+              if (slice < 15) break;
+              working.push({ id: Date.now() + Math.random(), x: 0, w: slice, lowerType: 'rangement', upperMode: 'upper', upperType: 'rangement', hoodW: 60, hasPlaque: false });
+              gap -= slice;
+            }
+          } else {
+            while (working.length > 1) {
+              const sumAll = working.reduce((a,c) => a + c.w, 0);
+              const lastIdx = working.length - 1;
+              const lastW = totalZone - (sumAll - working[lastIdx].w);
+              if (lastW >= 15) {
+                const last = working[lastIdx];
+                working[lastIdx] = {...last, w: lastW, lowerType: isStdWidth(lastW) ? fixLowerType(last.lowerType, lastW, false, working, last.id) : 'rangement'};
+                break;
+              } else { working = working.slice(0, lastIdx); }
+            }
+            if (working.length === 1) {
+              const only = working[0];
+              working[0] = {...only, w: totalZone, lowerType: isStdWidth(totalZone) ? fixLowerType(only.lowerType, totalZone, false, working, only.id) : 'rangement'};
+            }
+          }
+          newCabs = splitOversized(working);
+        }
+        setCabsB(repackCabs(newCabs, start, []));
+      };
+
+      const swapCabB = (id, dir) => {
+        const idx = cabsB.findIndex(c => c.id === id);
+        if (idx === -1) return;
+        const targetIdx = idx + dir;
+        if (targetIdx < 0 || targetIdx >= cabsB.length) return;
+        const [start] = getCabRange(wallLenB - ANGLE_W, colCfgB);
+        const newCabs = [...cabsB];
+        const a = { ...newCabs[idx],       w: newCabs[targetIdx].w, lowerType: newCabs[targetIdx].lowerType, upperMode: newCabs[targetIdx].upperMode, upperType: newCabs[targetIdx].upperType, hoodW: newCabs[targetIdx].hoodW, hasPlaque: newCabs[targetIdx].hasPlaque };
+        const b = { ...newCabs[targetIdx], w: newCabs[idx].w,       lowerType: newCabs[idx].lowerType,       upperMode: newCabs[idx].upperMode,       upperType: newCabs[idx].upperType,       hoodW: newCabs[idx].hoodW,       hasPlaque: newCabs[idx].hasPlaque };
+        newCabs[idx] = a; newCabs[targetIdx] = b;
+        setCabsB(repackCabs(newCabs, start, []));
+      };
 
       const swapCab = (id, dir) => {
         const idx = cabs.findIndex(c => c.id === id);
         if (idx === -1) return;
         const targetIdx = idx + dir;
         if (targetIdx < 0 || targetIdx >= cabs.length) return;
-        const [start] = getCabRange(wallLen, colCfg);
+        const effLen = layoutMode === 'enL' ? wallLen - ANGLE_W : wallLen;
+        const [start] = getCabRange(effLen, colCfg);
         const newCabs = [...cabs];
         // Swap uniquement les données, pas les positions x (repackCabs les recalcule)
         const a = { ...newCabs[idx],       w: newCabs[targetIdx].w,
@@ -2044,9 +2151,18 @@
 
       const addWin = () => {
         if (winW < 30) { flash('error', T('flash.winMinWidth')); return; }
-        if (winPos + winW > wallLen) { flash('error', T('flash.winOverflow')); return; }
+        if (winPos + winW > effLenA) { flash('error', T('flash.winOverflow')); return; }
         setWins(p => [...p, {id:winIdCounter, pos:winPos, w:winW}]);
         setWinIdCounter(i => i+1);
+        flash('success', T('flash.winAdded'));
+      };
+
+      const addWinB = () => {
+        const effLenB = wallLenB - ANGLE_W;
+        if (winWB < 30) { flash('error', T('flash.winMinWidth')); return; }
+        if (winPosB + winWB > effLenB) { flash('error', T('flash.winOverflow')); return; }
+        setWinsB(p => [...p, {id:winIdCounterB, pos:winPosB, w:winWB}]);
+        setWinIdCounterB(i => i+1);
         flash('success', T('flash.winAdded'));
       };
 
@@ -2055,15 +2171,20 @@
         const rect = svg.getBoundingClientRect();
         return (clientX - rect.left) * svgW / rect.width - C.MARGIN;
       };
+      const getSvgCmB = clientX => {
+        const svg = svgRefB.current; if (!svg) return 0;
+        const rect = svg.getBoundingClientRect();
+        return (clientX - rect.left) * svgWB / rect.width - C.MARGIN - ANGLE_W;
+      };
       const clampWinPos = (desired, ww) => {
         const forbidden = [
-          ...getColPositions(wallLen, colCfg).map(cX => ({ lo: cX-ww, hi: cX+C.COL_W })),
+          ...getColPositions(effLenA, colCfg).map(cX => ({ lo: cX-ww, hi: cX+C.COL_W })),
           ...extraCols.map(ec => ({ lo: ec.x-ww, hi: ec.x+ec.w }))
         ];
-        let p = Math.max(0, Math.min(wallLen-ww, desired));
+        let p = Math.max(0, Math.min(effLenA-ww, desired));
         for (const {lo, hi} of forbidden) {
           if (p > lo && p < hi)
-            p = desired <= (lo+hi)/2 ? Math.max(0, lo) : Math.min(wallLen-ww, hi);
+            p = desired <= (lo+hi)/2 ? Math.max(0, lo) : Math.min(effLenA-ww, hi);
         }
         return Math.round(p);
       };
@@ -2072,6 +2193,12 @@
       const onWinResizeStart = (winId, winWNow, e) => {
         e.stopPropagation();
         setResizingWin({id:winId, startCm:getSvgCm(e.clientX), startW:winWNow});
+      };
+      const onWinDragStartB = (winId, winPosNow, e) =>
+        setDraggingWinB({id:winId, startCm:getSvgCmB(e.clientX), startPos:winPosNow});
+      const onWinResizeStartB = (winId, winWNow, e) => {
+        e.stopPropagation();
+        setResizingWinB({id:winId, startCm:getSvgCmB(e.clientX), startW:winWNow});
       };
       const onSvgMouseMove = e => {
         if (draggingWin) {
@@ -2083,13 +2210,32 @@
           const dx = getSvgCm(e.clientX) - resizingWin.startCm;
           setWins(prev => prev.map(w => {
             if (w.id !== resizingWin.id) return w;
-            const newW = Math.max(30, Math.min(wallLen - w.pos, Math.round(resizingWin.startW + dx)));
+            const newW = Math.max(30, Math.min(effLenA - w.pos, Math.round(resizingWin.startW + dx)));
             return {...w, w: newW};
           }));
         }
       };
-      const onSvgMouseUp = () => { setDraggingWin(null); setResizingWin(null); };
-      const clearSel = () => { setSelLowerId(null); setSelUpperId(null); setSelectedColIdx(null); };
+      const onSvgMouseMoveB = e => {
+        const effLenB = wallLenB - ANGLE_W;
+        if (draggingWinB) {
+          const dx = getSvgCmB(e.clientX) - draggingWinB.startCm;
+          setWinsB(prev => prev.map(w => w.id===draggingWinB.id
+            ? {...w, pos:Math.max(0, Math.min(effLenB-w.w, Math.round(draggingWinB.startPos+dx)))} : w));
+        }
+        if (resizingWinB) {
+          const dx = getSvgCmB(e.clientX) - resizingWinB.startCm;
+          setWinsB(prev => prev.map(w => {
+            if (w.id !== resizingWinB.id) return w;
+            return {...w, w: Math.max(30, Math.min(effLenB - w.pos, Math.round(resizingWinB.startW + dx)))};
+          }));
+        }
+      };
+      const onSvgMouseUp  = () => { setDraggingWin(null); setResizingWin(null); };
+      const onSvgMouseUpB = () => { setDraggingWinB(null); setResizingWinB(null); };
+      const clearSel = () => {
+        setSelLowerId(null); setSelUpperId(null); setSelectedColIdx(null);
+        setSelLowerIdB(null); setSelUpperIdB(null);
+      };
 
       const saveDesign = () => {
         try {
@@ -2229,10 +2375,26 @@
               );
             })()}
 
+            {/* Accès angle — dernier meuble Mur A en mode L */}
+            {layoutMode === 'enL' && (() => {
+              const sorted = [...cabs].sort((a,b) => a.x - b.x);
+              const lastCab = sorted[sorted.length - 1];
+              if (!selLower || selLower.id !== lastCab?.id) return null;
+              return (
+                <div style={{marginTop:'10px',paddingTop:'10px',borderTop:'1px solid #eee'}}>
+                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>ACCÈS ANGLE</div>
+                  <Btn active={accesAngle==='A'} style={{width:'100%',textAlign:'center',fontSize:'11px'}}
+                    onClick={() => setAccesAngle(prev => prev==='A' ? null : 'A')}>
+                    ⌐ {accesAngle==='A' ? 'Activé ✓' : 'Activer'}
+                  </Btn>
+                </div>
+              );
+            })()}
+
             {/* Conversion en colonne */}
             {(() => {
-              const [cs, ce] = getCabRange(wallLen, colCfg);
-              const fixedCols = getColPositions(wallLen, colCfg);
+              const [cs, ce] = getCabRange(effLenA, colCfg);
+              const fixedCols = getColPositions(effLenA, colCfg);
               // Vérifier si le meuble est adjacent à une colonne (fixe ou ajoutée)
               const cabLeft  = selLower.x;
               const cabRight = selLower.x + selLower.w;
@@ -2323,15 +2485,135 @@
         );
       };
 
+      // ── Panneaux Mur B ────────────────────────────────────────────────
+      const LowerPanelB = () => {
+        if (!selLowerB) return (
+          <div style={{fontSize:'11px',color:'#bbb',textAlign:'center',padding:'14px 0',border:'1px dashed #e8e8e8',marginBottom:'14px',borderRadius:'2px'}}>
+            {T('pan.clickEdit')}
+          </div>
+        );
+        const isEvierSelB = EVIER_TYPES.includes(selLowerB.lowerType);
+        const isLvSelB = selLowerB.lowerType==='lv';
+        const isLlSelB = selLowerB.lowerType==='ll';
+        const sortedB = [...cabsB].sort((a,b) => a.x - b.x);
+        const firstCabB = sortedB[0];
+        return (
+          <Sec title={`MUR B · ${T('lower.'+selLowerB.lowerType)||selLowerB.lowerType} · ${selLowerB.w}cm`}>
+            <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.width').toUpperCase()}</div>
+            <div style={{display:'flex',gap:'4px',marginBottom:'10px',flexWrap:'wrap'}}>
+              {(() => {
+                const typeObj = LOWER_TYPES.find(t => t.id === selLowerB.lowerType);
+                const widths = typeObj?.widths ?? [45, 60, 90];
+                return widths.map(w => (
+                  <Btn key={w} active={selLowerB.w===w}
+                    onClick={() => updWithReflowB(selLowerB.id,{w, lowerType:fixLowerType(selLowerB.lowerType,w,false,cabsB,selLowerB.id)})}>
+                    {w}cm
+                  </Btn>
+                ));
+              })()}
+            </div>
+            <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.type').toUpperCase()}</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'2px'}}>
+              {LOWER_TYPES.filter(t => !t.hidden || selLowerB.lowerType === t.id).map((t, idx, arr) => {
+                const widthIncompat = t.widths && !t.widths.includes(selLowerB.w);
+                const evierDup = EVIER_TYPES.includes(t.id) && hasEvierB && !isEvierSelB;
+                const bouteilleCount = cabsB.filter(c => c.lowerType === 'bouteille').length;
+                const bouteilleFull = t.id === 'bouteille' && selLowerB.lowerType !== 'bouteille' && t.maxCount && bouteilleCount >= t.maxCount;
+                const lvDup = t.id==='lv' && hasLVB && !isLvSelB;
+                const llDup = t.id==='ll' && hasLlB && !isLlSelB;
+                const disabled = widthIncompat || evierDup || lvDup || llDup || bouteilleFull;
+                const reason = widthIncompat ? T('err.needsWidth', t.widths?.join(' ou ')) : evierDup ? T('err.evierDup') : lvDup ? T('err.lvDup') : llDup ? T('err.llDup') : bouteilleFull ? T('err.bottleMax', t.maxCount) : '';
+                const prevGroup = idx > 0 ? arr[idx-1].group : null;
+                const showSep = t.group && t.group !== prevGroup;
+                return (
+                  <React.Fragment key={t.id}>
+                    {showSep && idx > 0 && <div style={{fontSize:'8px',color:'#bbb',letterSpacing:'1.5px',marginTop:'5px',paddingTop:'4px',borderTop:'1px solid #f0f0f0',textTransform:'uppercase'}}>{T('group.'+t.group)}</div>}
+                    <Btn active={selLowerB.lowerType===t.id} disabled={disabled} title={disabled ? reason : ''}
+                      onClick={() => {
+                        const newType = t.id;
+                        const forceW = newType === 'bouteille' ? 15 : undefined;
+                        if (forceW !== undefined) {
+                          updWithReflowB(selLowerB.id, { lowerType: newType, w: forceW, hasPlaque: false });
+                        } else {
+                          const otherHasPlaque = cabsB.some(c => c.id !== selLowerB.id && c.hasPlaque);
+                          const plaqueKiller = EVIER_TYPES.includes(newType) || newType === 'bouteille';
+                          setCabsB(p => p.map(c => c.id === selLowerB.id ? {...c, lowerType: newType, hasPlaque: plaqueKiller ? false : c.hasPlaque} : c));
+                        }
+                      }}
+                      style={{textAlign:'left',fontSize:'11px'}}>
+                      {T('lower.'+t.id)}{disabled ? ' ⊘' : ''}
+                    </Btn>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+            {/* Accès angle — premier meuble Mur B */}
+            {selLowerB && firstCabB && selLowerB.id === firstCabB.id && (
+              <div style={{marginTop:'10px',paddingTop:'10px',borderTop:'1px solid #eee'}}>
+                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>ACCÈS ANGLE</div>
+                <Btn active={accesAngle==='B'} style={{width:'100%',textAlign:'center',fontSize:'11px'}}
+                  onClick={() => setAccesAngle(prev => prev==='B' ? null : 'B')}>
+                  ⌐ {accesAngle==='B' ? 'Activé ✓' : 'Activer'}
+                </Btn>
+              </div>
+            )}
+          </Sec>
+        );
+      };
+
+      const UpperPanelB = () => {
+        if (!selUpperB) return null;
+        const isWinZone = hasWinOverlap(selUpperB, winsB);
+        return (
+          <Sec title={`MUR B · ${T('upper.'+selUpperB.upperType)||''} · ${selUpperB.w}cm`}>
+            {isWinZone ? (
+              <div style={{fontSize:'11px',color:'#c87000',padding:'6px 8px',border:'1px solid #f0c060',background:'#fffbf0',borderRadius:'2px'}}>
+                {T('pan.windowZone')}
+              </div>
+            ) : (<>
+              <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.upperElem').toUpperCase()}</div>
+              <div style={{display:'flex',gap:'4px',marginBottom:'8px',flexWrap:'wrap'}}>
+                <Btn active={selUpperB.upperMode==='upper'} onClick={() => updB(selUpperB.id,{upperMode:'upper'})}>{T('btn.furniture')}</Btn>
+                <Btn active={selUpperB.upperMode==='hood'}
+                  disabled={selUpperB.w<60 || (hasHoodB && selUpperB.upperMode!=='hood')}
+                  title={selUpperB.w<60 ? T('err.hoodNeeds60') : (hasHoodB && selUpperB.upperMode!=='hood') ? T('err.hoodAlready') : ''}
+                  onClick={() => updB(selUpperB.id,{upperMode:'hood',hoodW:Math.min(60,selUpperB.w)})}>
+                  Hotte 🔥
+                </Btn>
+                <Btn active={selUpperB.upperMode==='none'} onClick={() => updB(selUpperB.id,{upperMode:'none'})}>{T('btn.none')}</Btn>
+              </div>
+              {selUpperB.upperMode==='upper' && (<>
+                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.style').toUpperCase()}</div>
+                <div style={{display:'flex',flexDirection:'column',gap:'3px',marginBottom:'6px'}}>
+                  {UPPER_TYPES.map(t => (
+                    <Btn key={t.id} active={selUpperB.upperType===t.id}
+                      onClick={() => updB(selUpperB.id,{upperType:t.id})}
+                      style={{textAlign:'left',fontSize:'11px'}}>{T('upper.'+t.id)}</Btn>
+                  ))}
+                </div>
+              </>)}
+              {selUpperB.upperMode==='hood' && selUpperB.w>=60 && (<>
+                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>{T('pan.hoodWidth').toUpperCase()}</div>
+                <div style={{display:'flex',gap:'4px'}}>
+                  {[60,90].filter(hw => hw<=selUpperB.w).map(hw => (
+                    <Btn key={hw} active={selUpperB.hoodW===hw} onClick={() => updB(selUpperB.id,{hoodW:hw})}>{hw}cm</Btn>
+                  ))}
+                </div>
+              </>)}
+            </>)}
+          </Sec>
+        );
+      };
+
       // ── Rendu principal ───────────────────────────────────────────────
       const price = calcPrice({ cabs, colCfg, colTypes, extraCols, wallLen, finishLower, finishUpper, finishCol, doorStyle });
       const quoteSummary = buildQuoteSummary({ wallLen, colCfg, colTypes, extraCols, cabs, wins, doorStyle, price, finishLower, finishUpper, finishCol, T, locale });
 
       return (
         <div style={{fontFamily:'Courier New, monospace',background:'#fff',minHeight:'100vh',color:'#222',display:'flex',flexDirection:'column'}}
-          onMouseMove={draggingWin || resizingWin ? onSvgMouseMove : undefined}
-          onMouseUp={draggingWin || resizingWin ? onSvgMouseUp : undefined}
-          onMouseLeave={draggingWin || resizingWin ? onSvgMouseUp : undefined}>
+          onMouseMove={draggingWin || resizingWin || draggingWinB || resizingWinB ? (e => { onSvgMouseMove(e); onSvgMouseMoveB(e); }) : undefined}
+          onMouseUp={draggingWin || resizingWin || draggingWinB || resizingWinB ? (() => { onSvgMouseUp(); onSvgMouseUpB(); }) : undefined}
+          onMouseLeave={draggingWin || resizingWin || draggingWinB || resizingWinB ? (() => { onSvgMouseUp(); onSvgMouseUpB(); }) : undefined}>
 
           {/* Header */}
           <div style={{padding:'10px 20px',borderBottom:'1px solid #e8e8e8',background:'#fff',display:'flex',alignItems:'center',gap:'16px'}}>
@@ -2442,11 +2724,13 @@
                       onChange={e => setSliderVal(+e.target.value)}
                       onMouseUp={e => {
                         const snapped = Math.max(180, Math.min(600, Math.round(+e.target.value / 5) * 5));
-                        setSliderVal(snapped); setWallLen(snapped); regenCabs(snapped, colCfg);
+                        setSliderVal(snapped); setWallLen(snapped);
+                        regenCabs(layoutMode === 'enL' ? snapped - ANGLE_W : snapped, colCfg);
                       }}
                       onTouchEnd={() => {
                         const snapped = Math.max(180, Math.min(600, Math.round(sliderVal / 5) * 5));
-                        setSliderVal(snapped); setWallLen(snapped); regenCabs(snapped, colCfg);
+                        setSliderVal(snapped); setWallLen(snapped);
+                        regenCabs(layoutMode === 'enL' ? snapped - ANGLE_W : snapped, colCfg);
                       }}
                       style={{flex:1}} />
                     <span style={{fontSize:'15px',minWidth:'48px',textAlign:'right',fontWeight:'bold',
@@ -2530,6 +2814,22 @@
                         </div>
                       );
                     };
+                    if (layoutMode === 'enL') return (<>
+                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>Mur A</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'8px'}}>
+                        {['none','D','C'].map(c => (
+                          <ColPicto key={c} cfg={c} active={colCfg===c}
+                            onClick={() => { setColCfg(c); regenCabs(wallLen - ANGLE_W, c); setSelectedColIdx(null); }}/>
+                        ))}
+                      </div>
+                      <div style={{fontSize:'9px',color:'#aaa',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px',fontFamily:'Courier New,monospace'}}>Mur B</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'4px'}}>
+                        {['none','E','B'].map(c => (
+                          <ColPicto key={c} cfg={c} active={colCfgB===c}
+                            onClick={() => { setColCfgB(c); regenCabsB(wallLenB - ANGLE_W, c); }}/>
+                        ))}
+                      </div>
+                    </>);
                     return (
                       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',marginBottom:'4px'}}>
                         {['none','A','B','C','D','E'].map(c => (
@@ -2543,40 +2843,63 @@
 
                 {/* Fenêtres */}
                 <Sec title={T('sec.windows')}>
-                  {wins.map(w => {
-                    const isSel = selectedWinId === w.id;
+                  {/* Toggle Mur A / Mur B en mode L */}
+                  {layoutMode === 'enL' && (
+                    <div style={{display:'flex',gap:'4px',marginBottom:'8px'}}>
+                      {['A','B'].map(wall => (
+                        <button key={wall} onClick={() => setActiveWinWall(wall)}
+                          style={{flex:1,padding:'4px',fontSize:'9px',letterSpacing:'1px',fontFamily:'Courier New,monospace',
+                            cursor:'pointer',borderRadius:'2px',textTransform:'uppercase',
+                            border: activeWinWall===wall ? '2px solid #222' : '1px solid #ccc',
+                            background: activeWinWall===wall ? '#222' : '#fff',
+                            color: activeWinWall===wall ? '#fff' : '#555',
+                            fontWeight: activeWinWall===wall ? 'bold' : 'normal'}}>
+                          Mur {wall}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* Liste des fenêtres du mur actif */}
+                  {(layoutMode === 'enL' && activeWinWall === 'B' ? winsB : wins).map(w => {
+                    const isWallB = layoutMode === 'enL' && activeWinWall === 'B';
+                    const isSel = isWallB ? selectedWinIdB === w.id : selectedWinId === w.id;
+                    const maxWall = isWallB ? wallLenB - ANGLE_W : effLenA;
                     return (
                       <div key={w.id}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
                           fontSize:'12px',marginBottom:'4px',
                           color: isSel ? '#1a56cc' : '#3366cc',
-                          cursor:'pointer',
-                          padding:'3px 5px',
+                          cursor:'pointer', padding:'3px 5px',
                           background: isSel ? '#f0f4ff' : 'transparent',
-                          border: isSel ? '1px solid #c0d0ff' : '1px solid transparent',
-                          borderRadius:'2px'}}
+                          border: isSel ? '1px solid #c0d0ff' : '1px solid transparent', borderRadius:'2px'}}
                           onClick={() => {
-                            if (isSel) { setSelectedWinId(null); }
-                            else { setSelectedWinId(w.id); setWinPos(w.pos); setWinW(w.w); }
+                            if (isWallB) {
+                              if (isSel) { setSelectedWinIdB(null); } else { setSelectedWinIdB(w.id); setWinPosB(w.pos); setWinWB(w.w); }
+                            } else {
+                              if (isSel) { setSelectedWinId(null); } else { setSelectedWinId(w.id); setWinPos(w.pos); setWinW(w.w); }
+                            }
                           }}>
                           <span>⊞ {w.pos}cm + {w.w}cm</span>
-                          <button onClick={e => { e.stopPropagation(); setWins(p => p.filter(x => x.id!==w.id)); if(isSel) setSelectedWinId(null); }}
-                            style={{background:'none',border:'none',color:'#cc3333',cursor:'pointer',fontSize:'14px',padding:'0 2px',lineHeight:1}}>×</button>
+                          <button onClick={e => {
+                            e.stopPropagation();
+                            if (isWallB) { setWinsB(p => p.filter(x => x.id!==w.id)); if(isSel) setSelectedWinIdB(null); }
+                            else { setWins(p => p.filter(x => x.id!==w.id)); if(isSel) setSelectedWinId(null); }
+                          }} style={{background:'none',border:'none',color:'#cc3333',cursor:'pointer',fontSize:'14px',padding:'0 2px',lineHeight:1}}>×</button>
                         </div>
                         {isSel && (
                           <div style={{display:'flex',gap:'6px',marginBottom:'6px',padding:'6px',background:'#f7f9ff',border:'1px solid #dde4ff',borderRadius:'2px'}}>
                             <div style={{flex:1}}>
                               <div style={{fontSize:'9px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
                               <input type="number" value={w.pos}
-                                onChange={e => setWins(p => p.map(x => x.id===w.id ? {...x, pos:+e.target.value} : x))}
-                                onBlur={e => setWins(p => p.map(x => x.id===w.id ? {...x, pos:Math.max(0, Math.min(wallLen-x.w, +e.target.value))} : x))}
+                                onChange={e => isWallB ? setWinsB(p => p.map(x => x.id===w.id ? {...x, pos:+e.target.value} : x)) : setWins(p => p.map(x => x.id===w.id ? {...x, pos:+e.target.value} : x))}
+                                onBlur={e => isWallB ? setWinsB(p => p.map(x => x.id===w.id ? {...x, pos:Math.max(0, Math.min(maxWall-x.w, +e.target.value))} : x)) : setWins(p => p.map(x => x.id===w.id ? {...x, pos:Math.max(0, Math.min(maxWall-x.w, +e.target.value))} : x))}
                                 style={{width:'100%',background:'#f7f7f7',border:'1px solid #ccc',color:'#222',padding:'3px 6px',fontSize:'10px',fontFamily:'Courier New,monospace'}}/>
                             </div>
                             <div style={{flex:1}}>
                               <div style={{fontSize:'9px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
                               <input type="number" value={w.w}
-                                onChange={e => setWins(p => p.map(x => x.id===w.id ? {...x, w:+e.target.value} : x))}
-                                onBlur={e => setWins(p => p.map(x => x.id===w.id ? {...x, w:Math.max(30, Math.min(wallLen-x.pos, +e.target.value))} : x))}
+                                onChange={e => isWallB ? setWinsB(p => p.map(x => x.id===w.id ? {...x, w:+e.target.value} : x)) : setWins(p => p.map(x => x.id===w.id ? {...x, w:+e.target.value} : x))}
+                                onBlur={e => isWallB ? setWinsB(p => p.map(x => x.id===w.id ? {...x, w:Math.max(30, Math.min(maxWall-x.pos, +e.target.value))} : x)) : setWins(p => p.map(x => x.id===w.id ? {...x, w:Math.max(30, Math.min(maxWall-x.pos, +e.target.value))} : x))}
                                 style={{width:'100%',background:'#f7f7f7',border:'1px solid #ccc',color:'#222',padding:'3px 6px',fontSize:'10px',fontFamily:'Courier New,monospace'}}/>
                             </div>
                           </div>
@@ -2585,21 +2908,35 @@
                     );
                   })}
                   <div style={{fontSize:'10px',color:'#bbb',marginBottom:'6px'}}>{T('win.drag')}</div>
-                  <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
-                      <input type="number" value={winPos}
-                        onChange={e => setWinPos(+e.target.value)}
-                        onBlur={e => setWinPos(Math.max(0, Math.min(wallLen-winW, +e.target.value)))} />
+                  {layoutMode === 'enL' && activeWinWall === 'B' ? (<>
+                    <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
+                        <input type="number" value={winPosB} onChange={e => setWinPosB(+e.target.value)}
+                          onBlur={e => setWinPosB(Math.max(0, Math.min(wallLenB-ANGLE_W-winWB, +e.target.value)))} />
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
+                        <input type="number" value={winWB} onChange={e => setWinWB(+e.target.value)}
+                          onBlur={e => setWinWB(Math.max(30, Math.min(wallLenB-ANGLE_W-winPosB, +e.target.value)))} />
+                      </div>
                     </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
-                      <input type="number" value={winW}
-                        onChange={e => setWinW(+e.target.value)}
-                        onBlur={e => setWinW(Math.max(30, Math.min(wallLen-winPos, +e.target.value)))} />
+                    <Btn onClick={addWinB} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
+                  </>) : (<>
+                    <div style={{display:'flex',gap:'6px',marginBottom:'6px'}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>← DEPUIS GAUCHE</div>
+                        <input type="number" value={winPos} onChange={e => setWinPos(+e.target.value)}
+                          onBlur={e => setWinPos(Math.max(0, Math.min(effLenA-winW, +e.target.value)))} />
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:'10px',color:'#999',marginBottom:'3px'}}>↔ LARGEUR</div>
+                        <input type="number" value={winW} onChange={e => setWinW(+e.target.value)}
+                          onBlur={e => setWinW(Math.max(30, Math.min(effLenA-winPos, +e.target.value)))} />
+                      </div>
                     </div>
-                  </div>
-                  <Btn onClick={addWin} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
+                    <Btn onClick={addWin} style={{width:'100%',textAlign:'center'}}>{T('win.addBtn')}</Btn>
+                  </>)}
                 </Sec>
 
               </>)}
@@ -2632,7 +2969,13 @@
                   </Sec>
                 )}
 
-                {selectedColIdx===null && (selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
+                {/* En mode L — panneau Mur B si un meuble B est sélectionné */}
+                {layoutMode === 'enL' && (selLowerIdB !== null || selUpperIdB !== null) && selectedColIdx === null && (
+                  selUpperIdB !== null ? <UpperPanelB /> : <LowerPanelB />
+                )}
+
+                {/* Panneau Mur A (défaut) */}
+                {!(layoutMode === 'enL' && (selLowerIdB !== null || selUpperIdB !== null)) && selectedColIdx===null && (selectedExtraColId !== null && extraCols.find(c=>c.id===selectedExtraColId) ? (() => {
                   const ec = extraCols.find(c=>c.id===selectedExtraColId);
                   return (
                     <Sec title={`${T('sec.extraCol')} · ${ec.w}cm`}>
@@ -2643,7 +2986,7 @@
                             onClick={() => {
                               const oldW = ec.w, diff = sz - oldW;
                               if (diff === 0) return;
-                              const [cabStart, cabEnd] = getCabRange(wallLen, colCfg);
+                              const [cabStart, cabEnd] = getCabRange(effLenA, colCfg);
                               const newColType = ec.colType==='four' && sz!==60 ? 'colonne' : ec.colType;
                               const colRight = ec.x + oldW;
                               const rightAdj = cabs.find(c => Math.abs(c.x - colRight) < 2);
@@ -2794,6 +3137,14 @@
             <div ref={canvasRef}
               style={{flex:1,background:'#f2f2f2',padding:'32px',overflowX:'auto',overflowY:'auto',display:'flex',flexDirection:'column',alignItems:'flex-start'}}
               onClick={clearSel}>
+              {/* ── Flex row : contient Mur A + coin + Mur B en mode L ── */}
+              <div style={{display:'flex',alignItems:'flex-start',gap:'0'}}>
+
+              {/* ── Colonne Mur A ── */}
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+              {layoutMode==='enL' && (
+                <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'6px',fontFamily:'Courier New,monospace'}}>MUR A</div>
+              )}
               <div style={{background:'white',boxShadow:'0 2px 24px rgba(0,0,0,0.10)',display:'inline-block',border:'1px solid #e8e8e8'}}
                 onClick={e => e.stopPropagation()}>
                 {/* Barre titre du plan */}
@@ -2804,7 +3155,7 @@
 
                 <svg ref={svgRef}
                   viewBox={`0 0 ${svgW} ${svgH}`}
-                  width={dispW} height={dispH}
+                  width={layoutMode==='enL' ? dispWA_l : dispW} height={layoutMode==='enL' ? dispHA_l : dispH}
                   xmlns="http://www.w3.org/2000/svg"
                   style={{display:'block',cursor:draggingWin?'grabbing':'default',userSelect:'none'}}
                   onMouseMove={onSvgMouseMove} onMouseUp={onSvgMouseUp} onMouseLeave={onSvgMouseUp}>
@@ -2900,7 +3251,7 @@
 
                   {/* Plinthe — passe unique sur toute la rangée */}
                   {(() => {
-                    const [ps, pe] = getCabRange(wallLen, colCfg);
+                    const [ps, pe] = getCabRange(effLenA, colCfg);
                     if (pe <= ps) return null;
                     return <rect
                       x={C.MARGIN + ps}
@@ -2929,8 +3280,157 @@
                     <text x={4} y={(FLOOR_Y+COL_TOP_Y)/2} textAnchor="middle" fontSize={6.5} fill="#888" fontFamily="monospace"
                       transform={`rotate(-90,4,${(FLOOR_Y+COL_TOP_Y)/2})`}>{C.COL_H} cm</text>
                   </g>
+
+                  {/* ── Bloc angle 60cm — Mur A (mode L uniquement) ── */}
+                  {layoutMode === 'enL' && (() => {
+                    const ax = C.MARGIN + wallLen - ANGLE_W; // angle DANS la longueur du mur
+                    const cabY  = svgY(C.LOWER_H);
+                    const cabH  = C.LOWER_H - C.PLINTH_H;
+                    const midY  = cabY + cabH / 2;
+                    const ctY   = svgY(C.LOWER_H + C.COUNTER_H);
+                    return (<>
+                      {/* Plan de travail */}
+                      <rect x={ax} y={ctY} width={ANGLE_W} height={C.COUNTER_H}
+                        fill="#d8d8d8" stroke="#999" strokeWidth={0.5}/>
+                      {/* Caisson */}
+                      <rect x={ax} y={cabY} width={ANGLE_W} height={cabH}
+                        fill="#f0f0f0" stroke="#999" strokeWidth={1}/>
+                      {/* Contour interne (porte fictive) */}
+                      <rect x={ax+3} y={cabY+3} width={ANGLE_W-6} height={cabH-6}
+                        fill="none" stroke="#ccc" strokeWidth={0.5}/>
+                      {/* Étagère horizontale au milieu */}
+                      <line x1={ax+2} y1={midY} x2={ax+ANGLE_W-2} y2={midY}
+                        stroke="#bbb" strokeWidth={1}/>
+                      {/* Plinthe */}
+                      <rect x={ax} y={svgY(C.PLINTH_H)} width={ANGLE_W} height={C.PLINTH_H}
+                        fill="#d8d8d8" stroke="#888" strokeWidth={0.8}/>
+                      {/* Label */}
+                      <text x={ax+ANGLE_W/2} y={cabY+cabH-4} textAnchor="middle"
+                        fontSize={6} fill="#aaa" fontFamily="Courier New,monospace">ANGLE 60cm</text>
+                      {/* Indicateur Accès angle A */}
+                      {accesAngle==='A' && (() => {
+                        return <polygon points={`${ax},${cabY} ${ax+10},${cabY} ${ax},${cabY+10}`}
+                          fill="#3399cc" opacity={0.85}/>;
+                      })()}
+                    </>);
+                  })()}
                 </svg>
               </div>
+              </div>{/* fin col Mur A */}
+
+              {/* ── Gap jonction entre Mur A et Mur B ── */}
+              {layoutMode === 'enL' && <div style={{width:'8px',flexShrink:0}}/>}
+
+              {/* ── Colonne Mur B ── */}
+              {layoutMode === 'enL' && (() => {
+                // Longueur effective des meubles = wallLenB - ANGLE_W (bloc angle inclus dans wallLenB)
+                const effLenB    = wallLenB - ANGLE_W;
+                const [csB, ceB] = getCabRange(effLenB, colCfgB);
+                const colsB      = getColPositions(effLenB, colCfgB);
+                const sortedCabsB = [...cabsB].sort((a,b)=>a.x-b.x);
+                const firstCabB  = sortedCabsB[0];
+                // Bloc angle : à gauche, de C.MARGIN à C.MARGIN+ANGLE_W
+                const ax   = C.MARGIN;
+                const cabY = svgY(C.LOWER_H);
+                const cabH = C.LOWER_H - C.PLINTH_H;
+                const midY = cabY + cabH / 2;
+                const ctY  = svgY(C.LOWER_H + C.COUNTER_H);
+                return (
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
+                    <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'6px',fontFamily:'Courier New,monospace'}}>MUR B</div>
+                    <div style={{background:'white',boxShadow:'0 2px 24px rgba(0,0,0,0.10)',display:'inline-block',border:'1px solid #e8e8e8'}}>
+                      <div style={{padding:'7px 14px',background:'#f9f9f9',borderBottom:'1px solid #e8e8e8',display:'flex',justifyContent:'space-between',fontSize:'7.5px',color:'#999',fontFamily:'monospace'}}>
+                        <span>{T('svg.elevation')} — L={wallLenB}cm{colCfgB!=='none'?` · COL.${colCfgB}`:''}</span>
+                        <span>{T('svg.dims')}</span>
+                      </div>
+                      <svg ref={svgRefB}
+                        viewBox={`0 0 ${svgWB} ${svgH}`} width={dispWB_l} height={dispHB_l}
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{display:'block',userSelect:'none',cursor:draggingWinB?'grabbing':'default'}}
+                        onMouseMove={onSvgMouseMoveB} onMouseUp={onSvgMouseUpB} onMouseLeave={onSvgMouseUpB}>
+                        {/* Grille */}
+                        <g>
+                          {Array.from({length:Math.ceil(svgWB/10)+1},(_,i)=>
+                            <line key={`v${i}`} x1={i*10} y1={0} x2={i*10} y2={svgH} stroke="#f0f0f0" strokeWidth={0.3}/>)}
+                          {Array.from({length:Math.ceil(svgH/10)+1},(_,i)=>
+                            <line key={`h${i}`} x1={0} y1={i*10} x2={svgWB} y2={i*10} stroke="#f0f0f0" strokeWidth={0.3}/>)}
+                        </g>
+
+                        {/* ── Mur complet (inclut la zone angle) ── */}
+                        <rect x={C.MARGIN} y={COL_TOP_Y} width={wallLenB} height={C.COL_H} fill="#fafafa"/>
+                        <line x1={C.MARGIN} y1={COL_TOP_Y} x2={C.MARGIN} y2={FLOOR_Y} stroke="#555" strokeWidth={0.8}/>
+                        <line x1={C.MARGIN+wallLenB} y1={COL_TOP_Y} x2={C.MARGIN+wallLenB} y2={FLOOR_Y} stroke="#555" strokeWidth={0.8}/>
+                        <line x1={C.MARGIN} y1={FLOOR_Y} x2={C.MARGIN+wallLenB} y2={FLOOR_Y} stroke="#222" strokeWidth={2.5}/>
+
+                        {/* ── Bloc angle 60cm à gauche ── */}
+                        <rect x={ax} y={ctY} width={ANGLE_W} height={C.COUNTER_H}
+                          fill="#d8d8d8" stroke="#999" strokeWidth={0.5}/>
+                        <rect x={ax} y={cabY} width={ANGLE_W} height={cabH}
+                          fill="#f0f0f0" stroke="#999" strokeWidth={1}/>
+                        <rect x={ax+3} y={cabY+3} width={ANGLE_W-6} height={cabH-6}
+                          fill="none" stroke="#ccc" strokeWidth={0.5}/>
+                        <line x1={ax+2} y1={midY} x2={ax+ANGLE_W-2} y2={midY}
+                          stroke="#bbb" strokeWidth={1}/>
+                        <rect x={ax} y={svgY(C.PLINTH_H)} width={ANGLE_W} height={C.PLINTH_H}
+                          fill="#d8d8d8" stroke="#888" strokeWidth={0.8}/>
+                        <text x={ax+ANGLE_W/2} y={cabY+cabH-4} textAnchor="middle"
+                          fontSize={6} fill="#aaa" fontFamily="Courier New,monospace">ANGLE 60cm</text>
+
+                        {/* ── Contenu Mur B : meubles décalés après le bloc angle ── */}
+                        <g transform={`translate(${ANGLE_W},0)`}>
+                          {/* Fenêtres Mur B */}
+                          <g>{winsB.map(w => <WinSvg key={w.id} win={w}
+                            onDragStart={onWinDragStartB} onResizeStart={onWinResizeStartB}
+                            onSelect={id => setSelectedWinIdB(prev => prev===id ? null : id)}
+                            isDragging={draggingWinB?.id===w.id} isResizing={resizingWinB?.id===w.id}
+                            isSelected={selectedWinIdB===w.id} />)}</g>
+                          {/* Colonnes Mur B */}
+                          <g>{colsB.map((cx,i) => {
+                            const isRight = colCfgB==='E'||(colCfgB==='B'&&i===colsB.length-1);
+                            return <ColSvg key={i} xPos={cx} doorStyle={doorStyle} idx={i} isLeft={!isRight}
+                              colType={'colonne'} selected={false} colFill={getFacadeFill(finishCol)}
+                              onClick={()=>{}} />;
+                          })}</g>
+                          {/* Meubles hauts — tous interactifs */}
+                          <g>{cabsB.map(c=><UpperSvg key={c.id} cab={c} doorStyle={doorStyle} wins={winsB}
+                            selected={selUpperIdB===c.id} facadeFill={getFacadeFill(finishUpper)}
+                            onSelect={() => { setSelUpperIdB(prev=>prev===c.id?null:c.id); setSelLowerIdB(null); }}/>)}</g>
+                          {/* Meubles bas — tous cliquables */}
+                          <g>{cabsB.map((c,idx)=>{
+                            const isLowerSelB = selLowerIdB===c.id;
+                            return <LowerSvg key={c.id} cab={c}
+                              selected={isLowerSelB}
+                              onSelect={() => { setSelLowerIdB(prev=>prev===c.id?null:c.id); setSelUpperIdB(null); }}
+                              doorStyle={doorStyle} facadeFill={getFacadeFill(finishLower)}
+                              canSwapLeft={isLowerSelB && idx > 0}
+                              canSwapRight={isLowerSelB && idx < cabsB.length-1}
+                              onSwapLeft={() => swapCabB(c.id, -1)}
+                              onSwapRight={() => swapCabB(c.id, +1)}/>;
+                          })}</g>
+                          {/* Plinthe */}
+                          {ceB > csB && <rect x={C.MARGIN+csB} y={svgY(C.PLINTH_H)} width={ceB-csB} height={C.PLINTH_H}
+                            rx={0.5} fill="#e8e8e8" stroke="#555" strokeWidth={0.8}/>}
+                          {/* Indicateur Accès angle B */}
+                          {accesAngle==='B' && firstCabB && (
+                            <polygon points={`${C.MARGIN+firstCabB.x},${cabY} ${C.MARGIN+firstCabB.x+10},${cabY} ${C.MARGIN+firstCabB.x},${cabY+10}`}
+                              fill="#3399cc" opacity={0.85}/>
+                          )}
+                        </g>
+
+                        {/* ── Cotation totale (inclut bloc angle) ── */}
+                        <g>
+                          <line x1={C.MARGIN} y1={svgH-8} x2={C.MARGIN+wallLenB} y2={svgH-8} stroke="#888" strokeWidth={0.7}/>
+                          <line x1={C.MARGIN} y1={svgH-12} x2={C.MARGIN} y2={svgH-4} stroke="#888" strokeWidth={0.7}/>
+                          <line x1={C.MARGIN+wallLenB} y1={svgH-12} x2={C.MARGIN+wallLenB} y2={svgH-4} stroke="#888" strokeWidth={0.7}/>
+                          <text x={C.MARGIN+wallLenB/2} y={svgH-1} textAnchor="middle" fontSize={7.5} fill="#555" fontFamily="Courier New,monospace">{wallLenB} cm</text>
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              </div>{/* fin flex row panneaux */}
 
               {/* Légende */}
               <div style={{display:'flex',gap:'16px',marginTop:'12px',fontSize:'11px',color:'#999',flexWrap:'wrap'}}>
@@ -2939,7 +3439,11 @@
                 <span>▽ {T('leg.hood')}</span>
                 <span>⊞ {T('leg.window')}</span>
                 <span>◼ {T('leg.col')}</span>
-                {Math.abs(diff)<=0.5 && cabs.length>0 && <span style={{color:'#1a7a3a',fontWeight:'bold'}}>{T('leg.ok')} · {wallLen}cm</span>}
+                {Math.abs(diff)<=0.5 && cabs.length>0 && (
+                  layoutMode === 'enL'
+                    ? <span style={{color:'#1a7a3a',fontWeight:'bold'}}>MUR A : {wallLen}cm · MUR B : {wallLenB}cm</span>
+                    : <span style={{color:'#1a7a3a',fontWeight:'bold'}}>{T('leg.ok')} · {wallLen}cm</span>
+                )}
               </div>
             </div>
           </div>
