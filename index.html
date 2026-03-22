@@ -1640,6 +1640,15 @@
         setVerifLoading(false);
       };
       const send = async () => {
+        console.log('[SEND] isValid:', isValid, {
+          nom: nom.trim().length > 0,
+          email: email.includes('@'),
+          tel: tel.trim().length > 0,
+          ville: ville.trim().length > 0,
+          pays: pays.trim().length > 0,
+          delai: delai !== '' ? delai : '⚠️ vide',
+          emailVerified,
+        });
         if (!isValid) return;
         setStatus('sending');
         try {
