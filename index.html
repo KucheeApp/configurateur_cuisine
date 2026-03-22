@@ -1058,7 +1058,7 @@
       );
     };
 
-    const LowerSvg = ({ cab, selected, onSelect, doorStyle, facadeFill='#fff', canSwapLeft, canSwapRight, onSwapLeft, onSwapRight }) => {
+    const LowerSvg = ({ cab, selected, onSelect, doorStyle, facadeFill='#fff', canSwapLeft, canSwapRight, onSwapLeft, onSwapRight, isAngle=false, angleCorner='right' }) => {
       const x = cab.x + C.MARGIN, y = svgY(C.LOWER_H);
       const cw = cab.w;
       const h  = C.LOWER_H - C.PLINTH_H;
@@ -1350,6 +1350,14 @@
               </g>
             )}
           </>)}
+
+          {/* Indicateur meuble d'angle — diagonale sobre dans le coin */}
+          {isAngle && (() => {
+            const sz = 12;
+            return angleCorner === 'right'
+              ? <polygon points={`${x+cw-sz},${y} ${x+cw},${y} ${x+cw},${y+sz}`} fill="#888" opacity={0.5}/>
+              : <polygon points={`${x},${y} ${x+sz},${y} ${x},${y+sz}`} fill="#888" opacity={0.5}/>;
+          })()}
 
         </g>
       );
@@ -1962,8 +1970,9 @@
       // Le bloc angle (ANGLE_W) est inclus DANS la longueur de chaque mur — pas d'extension SVG
       const svgWB    = wallLenB + C.MARGIN * 2;
       const availWEach = Math.max(150, Math.floor((availW - 8) / 2)); // 8px de gap entre panneaux
-      const lScale   = Math.min(1, availWEach / (svgW * 2));
-      const lScaleB  = Math.min(1, availWEach / (svgWB * 2));
+      const longerSvgW = Math.max(svgW, svgWB);
+      const lScale   = Math.min(1, availWEach / (longerSvgW * 2));
+      const lScaleB  = lScale;
       const dispWA_l = Math.round(svgW * 2 * lScale);
       const dispHA_l = Math.round(svgH * 2 * lScale);
       const dispWB_l = Math.round(svgWB * 2 * lScaleB);
@@ -2009,10 +2018,15 @@
         const idx = cabs.findIndex(c => c.id===id); if (idx===-1) return;
         const effLen = layoutMode === 'enL' ? wallLen - ANGLE_W : wallLen;
         const [start, end] = getCabRange(effLen, colCfg);
-        const totalZone = (end - start) - extraCols.filter(ec => ec.x >= start && ec.x + ec.w <= end).reduce((s, ec) => s + ec.w, 0);
+        const extraColW = extraCols.filter(ec => ec.x >= start && ec.x + ec.w <= end).reduce((s, ec) => s + ec.w, 0);
+        // Si meuble angle figé sur Mur A, le réserver avant reflow
+        const sortedForAngleA = [...cabs].sort((a,b)=>a.x-b.x);
+        const angleCabA = (accesAngle === 'A' && layoutMode === 'enL') ? sortedForAngleA[sortedForAngleA.length-1] : null;
+        if (angleCabA && angleCabA.id === id) return; // resize direct du meuble angle : bloqué
+        const totalZone = (end - start) - extraColW - (angleCabA ? 45 : 0);
 
-        // Applique le changement sur le meuble cible
-        let newCabs = cabs.map(c => c.id===id ? {...c,...changes} : c);
+        // Applique le changement sur le meuble cible (hors meuble angle)
+        let newCabs = (angleCabA ? cabs.filter(c => c.id !== angleCabA.id) : cabs).map(c => c.id===id ? {...c,...changes} : c);
 
         if (changes.w !== undefined) {
           let working = [...newCabs];
@@ -2069,6 +2083,7 @@
           newCabs = splitOversized(working);
         }
 
+        if (angleCabA) newCabs = [...newCabs, {...angleCabA, w: 45}];
         setCabs(repackCabs(newCabs, start, extraCols));
       };
 
@@ -2079,6 +2094,10 @@
         const idx = cabsB.findIndex(c => c.id===id); if (idx===-1) return;
         const effLenB2 = wallLenB - ANGLE_W;
         const [start, end] = getCabRange(effLenB2, colCfgB);
+        // Si meuble angle figé sur Mur B, bloquer son resize direct
+        const sortedForAngleB = [...cabsB].sort((a,b)=>a.x-b.x);
+        const angleCabB = accesAngle === 'B' ? sortedForAngleB[0] : null;
+        if (angleCabB && angleCabB.id === id) return;
         const totalZone = end - start;
         let newCabs = cabsB.map(c => c.id===id ? {...c,...changes} : c);
         if (changes.w !== undefined) {
@@ -2375,17 +2394,20 @@
               );
             })()}
 
-            {/* Accès angle — dernier meuble Mur A en mode L */}
+            {/* Meuble d'angle — dernier meuble Mur A en mode L */}
             {layoutMode === 'enL' && (() => {
               const sorted = [...cabs].sort((a,b) => a.x - b.x);
               const lastCab = sorted[sorted.length - 1];
               if (!selLower || selLower.id !== lastCab?.id) return null;
               return (
                 <div style={{marginTop:'10px',paddingTop:'10px',borderTop:'1px solid #eee'}}>
-                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>ACCÈS ANGLE</div>
+                  <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>MEUBLE D'ANGLE</div>
                   <Btn active={accesAngle==='A'} style={{width:'100%',textAlign:'center',fontSize:'11px'}}
-                    onClick={() => setAccesAngle(prev => prev==='A' ? null : 'A')}>
-                    ⌐ {accesAngle==='A' ? 'Activé ✓' : 'Activer'}
+                    onClick={() => {
+                      if (accesAngle === 'A') { setAccesAngle(null); }
+                      else { setAccesAngle('A'); updWithReflow(lastCab.id, {w: 45}); }
+                    }}>
+                    ◣ {accesAngle==='A' ? 'Activé ✓' : 'Activer · 45cm'}
                   </Btn>
                 </div>
               );
@@ -2547,13 +2569,16 @@
                 );
               })}
             </div>
-            {/* Accès angle — premier meuble Mur B */}
+            {/* Meuble d'angle — premier meuble Mur B */}
             {selLowerB && firstCabB && selLowerB.id === firstCabB.id && (
               <div style={{marginTop:'10px',paddingTop:'10px',borderTop:'1px solid #eee'}}>
-                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>ACCÈS ANGLE</div>
+                <div style={{fontSize:'10px',color:'#999',marginBottom:'5px',letterSpacing:'1px'}}>MEUBLE D'ANGLE</div>
                 <Btn active={accesAngle==='B'} style={{width:'100%',textAlign:'center',fontSize:'11px'}}
-                  onClick={() => setAccesAngle(prev => prev==='B' ? null : 'B')}>
-                  ⌐ {accesAngle==='B' ? 'Activé ✓' : 'Activer'}
+                  onClick={() => {
+                    if (accesAngle === 'B') { setAccesAngle(null); }
+                    else { setAccesAngle('B'); updWithReflowB(firstCabB.id, {w: 45}); }
+                  }}>
+                  ◣ {accesAngle==='B' ? 'Activé ✓' : 'Activer · 45cm'}
                 </Btn>
               </div>
             )}
@@ -3246,7 +3271,9 @@
                       canSwapLeft={isLowerSel && idx > 0}
                       canSwapRight={isLowerSel && idx < cabs.length-1}
                       onSwapLeft={() => swapCab(c.id, -1)}
-                      onSwapRight={() => swapCab(c.id, +1)} />;
+                      onSwapRight={() => swapCab(c.id, +1)}
+                      isAngle={accesAngle==='A' && layoutMode==='enL' && idx===cabs.length-1}
+                      angleCorner="right" />;
                   })}</g>
 
                   {/* Plinthe — passe unique sur toute la rangée */}
@@ -3307,11 +3334,6 @@
                       {/* Label */}
                       <text x={ax+ANGLE_W/2} y={cabY+cabH-4} textAnchor="middle"
                         fontSize={6} fill="#aaa" fontFamily="Courier New,monospace">ANGLE 60cm</text>
-                      {/* Indicateur Accès angle A */}
-                      {accesAngle==='A' && (() => {
-                        return <polygon points={`${ax},${cabY} ${ax+10},${cabY} ${ax},${cabY+10}`}
-                          fill="#3399cc" opacity={0.85}/>;
-                      })()}
                     </>);
                   })()}
                 </svg>
@@ -3405,16 +3427,13 @@
                               canSwapLeft={isLowerSelB && idx > 0}
                               canSwapRight={isLowerSelB && idx < cabsB.length-1}
                               onSwapLeft={() => swapCabB(c.id, -1)}
-                              onSwapRight={() => swapCabB(c.id, +1)}/>;
+                              onSwapRight={() => swapCabB(c.id, +1)}
+                              isAngle={accesAngle==='B' && idx===0}
+                              angleCorner="left"/>;
                           })}</g>
                           {/* Plinthe */}
                           {ceB > csB && <rect x={C.MARGIN+csB} y={svgY(C.PLINTH_H)} width={ceB-csB} height={C.PLINTH_H}
                             rx={0.5} fill="#e8e8e8" stroke="#555" strokeWidth={0.8}/>}
-                          {/* Indicateur Accès angle B */}
-                          {accesAngle==='B' && firstCabB && (
-                            <polygon points={`${C.MARGIN+firstCabB.x},${cabY} ${C.MARGIN+firstCabB.x+10},${cabY} ${C.MARGIN+firstCabB.x},${cabY+10}`}
-                              fill="#3399cc" opacity={0.85}/>
-                          )}
                         </g>
 
                         {/* ── Cotation totale (inclut bloc angle) ── */}
