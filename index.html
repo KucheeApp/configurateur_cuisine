@@ -1910,7 +1910,7 @@
       const [cabs,           setCabs]            = React.useState(() => genCabs(360,'A'));
       const [selLowerId,     setSelLowerId]      = React.useState(null);
       const [selUpperId,     setSelUpperId]      = React.useState(null);
-      const [phase,          setPhase]           = React.useState('measure');
+      const [phase,          setPhase]           = React.useState('home');
       const [doorStyle,      setDoorStyle]       = React.useState('smooth');
       const [showLeadModal,  setShowLeadModal]   = React.useState(false);
       const [winPos,         setWinPos]          = React.useState(150);
@@ -2696,7 +2696,99 @@
             </div>
           </div>
 
-          <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+          {/* ══════════════════════════════════════════
+              ÉTAPE 0 — CHOIX DE L'IMPLANTATION
+          ══════════════════════════════════════════ */}
+          {phase === 'home' && (
+            <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 24px'}}>
+              <div style={{fontSize:'9px',letterSpacing:'3px',color:'#aaa',textTransform:'uppercase',marginBottom:'10px'}}>
+                {T('hdr.subtitle')}
+              </div>
+              <div style={{fontSize:'18px',letterSpacing:'4px',fontWeight:'bold',marginBottom:'6px',textAlign:'center'}}>
+                CHOISISSEZ VOTRE IMPLANTATION
+              </div>
+              <div style={{fontSize:'10px',color:'#999',marginBottom:'36px',letterSpacing:'1px'}}>
+                Sélectionnez la configuration de votre cuisine
+              </div>
+
+              <div style={{display:'flex',gap:'14px',flexWrap:'wrap',justifyContent:'center',maxWidth:'760px'}}>
+
+                {/* ── Linéaire — disponible ── */}
+                <div
+                  onMouseEnter={e => { e.currentTarget.style.background='#f5f5f5'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background='#fff'; }}
+                  onClick={() => { setLayoutMode('lineaire'); setPhase('measure'); }}
+                  style={{width:'180px',padding:'22px 14px 18px',border:'2px solid #222',borderRadius:'2px',cursor:'pointer',textAlign:'center',background:'#fff',transition:'background 0.1s'}}>
+                  <svg width="120" height="64" viewBox="0 0 120 64" style={{display:'block',margin:'0 auto'}}>
+                    <rect x="4" y="4" width="112" height="16" fill="#ececec" stroke="#555" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="4" x2={x} y2="20" stroke="#888" strokeWidth="0.8"/>)}
+                    <rect x="4" y="23" width="112" height="3" fill="#444"/>
+                    <rect x="4" y="30" width="112" height="24" fill="#ececec" stroke="#555" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="30" x2={x} y2="54" stroke="#888" strokeWidth="0.8"/>)}
+                  </svg>
+                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px'}}>Linéaire</div>
+                </div>
+
+                {/* ── En L — disponible ── */}
+                <div
+                  onMouseEnter={e => { e.currentTarget.style.background='#f5f5f5'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background='#fff'; }}
+                  onClick={() => { setLayoutMode('enL'); setPhase('measure'); }}
+                  style={{width:'180px',padding:'22px 14px 18px',border:'2px solid #222',borderRadius:'2px',cursor:'pointer',textAlign:'center',background:'#fff',transition:'background 0.1s'}}>
+                  <svg width="120" height="64" viewBox="0 0 120 64" style={{display:'block',margin:'0 auto'}}>
+                    <rect x="4" y="4" width="28" height="36" fill="#ececec" stroke="#555" strokeWidth="1"/>
+                    {[14,24].map(y => <line key={y} x1="4" y1={y} x2="32" y2={y} stroke="#888" strokeWidth="0.8"/>)}
+                    <rect x="7" y="43" width="3" height="14" fill="#444"/>
+                    <rect x="4" y="44" width="112" height="14" fill="#ececec" stroke="#555" strokeWidth="1"/>
+                    {[32,60,88].map(x => <line key={x} x1={x} y1="44" x2={x} y2="58" stroke="#888" strokeWidth="0.8"/>)}
+                    <rect x="4" y="41" width="112" height="3" fill="#444"/>
+                  </svg>
+                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px'}}>En L</div>
+                </div>
+
+                {/* ── Double linéaire — bientôt ── */}
+                <div style={{width:'180px',padding:'22px 14px 18px',border:'1px solid #ddd',borderRadius:'2px',cursor:'not-allowed',textAlign:'center',background:'#fafafa',opacity:0.55,position:'relative'}}>
+                  <div style={{position:'absolute',top:'8px',right:'8px',background:'#999',color:'#fff',fontSize:'6px',padding:'2px 5px',letterSpacing:'1px',textTransform:'uppercase',borderRadius:'2px'}}>Bientôt</div>
+                  <svg width="120" height="64" viewBox="0 0 120 64" style={{display:'block',margin:'0 auto'}}>
+                    <rect x="4" y="4" width="112" height="18" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="4" x2={x} y2="22" stroke="#bbb" strokeWidth="0.8"/>)}
+                    <rect x="4" y="42" width="112" height="18" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="42" x2={x} y2="60" stroke="#bbb" strokeWidth="0.8"/>)}
+                  </svg>
+                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px',color:'#aaa'}}>Double linéaire</div>
+                </div>
+
+                {/* ── U — bientôt ── */}
+                <div style={{width:'180px',padding:'22px 14px 18px',border:'1px solid #ddd',borderRadius:'2px',cursor:'not-allowed',textAlign:'center',background:'#fafafa',opacity:0.55,position:'relative'}}>
+                  <div style={{position:'absolute',top:'8px',right:'8px',background:'#999',color:'#fff',fontSize:'6px',padding:'2px 5px',letterSpacing:'1px',textTransform:'uppercase',borderRadius:'2px'}}>Bientôt</div>
+                  <svg width="120" height="64" viewBox="0 0 120 64" style={{display:'block',margin:'0 auto'}}>
+                    <rect x="4" y="4" width="26" height="36" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[16,26].map(y => <line key={y} x1="4" y1={y} x2="30" y2={y} stroke="#bbb" strokeWidth="0.8"/>)}
+                    <rect x="90" y="4" width="26" height="36" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[16,26].map(y => <line key={y} x1="90" y1={y} x2="116" y2={y} stroke="#bbb" strokeWidth="0.8"/>)}
+                    <rect x="4" y="44" width="112" height="16" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[30,56,82].map(x => <line key={x} x1={x} y1="44" x2={x} y2="60" stroke="#bbb" strokeWidth="0.8"/>)}
+                  </svg>
+                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px',color:'#aaa'}}>En U</div>
+                </div>
+
+                {/* ── Îlot — bientôt ── */}
+                <div style={{width:'180px',padding:'22px 14px 18px',border:'1px solid #ddd',borderRadius:'2px',cursor:'not-allowed',textAlign:'center',background:'#fafafa',opacity:0.55,position:'relative'}}>
+                  <div style={{position:'absolute',top:'8px',right:'8px',background:'#999',color:'#fff',fontSize:'6px',padding:'2px 5px',letterSpacing:'1px',textTransform:'uppercase',borderRadius:'2px'}}>Bientôt</div>
+                  <svg width="120" height="64" viewBox="0 0 120 64" style={{display:'block',margin:'0 auto'}}>
+                    <rect x="4" y="4" width="112" height="16" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[28,52,76,100].map(x => <line key={x} x1={x} y1="4" x2={x} y2="20" stroke="#bbb" strokeWidth="0.8"/>)}
+                    <rect x="28" y="42" width="64" height="16" fill="#ececec" stroke="#aaa" strokeWidth="1"/>
+                    {[52,76].map(x => <line key={x} x1={x} y1="42" x2={x} y2="58" stroke="#bbb" strokeWidth="0.8"/>)}
+                  </svg>
+                  <div style={{fontSize:'11px',letterSpacing:'2px',fontWeight:'bold',textTransform:'uppercase',marginTop:'14px',color:'#aaa'}}>Avec îlot</div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {phase !== 'home' && <div style={{display:'flex',flex:1,overflow:'hidden'}}>
 
             {/* ── Sidebar ── */}
             <div style={{width:'260px',flexShrink:0,background:'#fafafa',borderRight:'1px solid #e8e8e8',padding:'14px',overflowY:'auto',display:'flex',flexDirection:'column'}}>
@@ -2745,27 +2837,6 @@
                   ÉTAPE 1 — MESURES & COLONNES
               ════════════════════════════════ */}
               {phase === 'measure' && (<>
-
-                {/* ── Sélecteur d'implantation ── */}
-                <Sec title="Implantation">
-                  <div style={{display:'flex',gap:'6px'}}>
-                    {[
-                      {key:'lineaire', label:'Linéaire'},
-                      {key:'enL',      label:'En L'},
-                    ].map(({key, label}) => (
-                      <button key={key} onClick={() => setLayoutMode(key)}
-                        style={{flex:1,padding:'6px 0',fontSize:'10px',letterSpacing:'1px',
-                          fontFamily:'Courier New,monospace',cursor:'pointer',
-                          border: layoutMode===key ? '2px solid #222' : '1px solid #ccc',
-                          background: layoutMode===key ? '#222' : '#fff',
-                          color: layoutMode===key ? '#fff' : '#555',
-                          borderRadius:'2px',fontWeight: layoutMode===key ? 'bold' : 'normal',
-                          textTransform:'uppercase'}}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </Sec>
 
                 <Sec title={layoutMode === 'enL' ? 'Mur A' : T('sec.wallLen')}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
@@ -3489,7 +3560,7 @@
                 )}
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* ── Modal Lead ── */}
           {showLeadModal && (
