@@ -1604,7 +1604,11 @@
       const [verifSent,setVerifSent]=React.useState(false);
       const [verifError,setVerifError]=React.useState('');
       const [verifLoading,setVerifLoading]=React.useState(false);
+      const [touched,setTouched]=React.useState({});
+      const touch=(f)=>setTouched(t=>({...t,[f]:true}));
+      const touchAll=()=>setTouched({nom:true,email:true,tel:true,ville:true,pays:true,delai:true});
       const isValid=nom.trim().length>0&&email.includes('@')&&tel.trim().length>0&&ville.trim().length>0&&pays.trim().length>0&&delai!==''&&emailVerified;
+      const errStyle={color:'#cc3333',fontSize:'10px',marginTop:'3px'};
 
       const sendVerifCode = async () => {
         if (!email.includes('@')) return;
@@ -1699,27 +1703,43 @@
 
                 <div style={{marginBottom:'12px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.name')}</div>
-                  <input type="text" value={nom} onChange={e=>setNom(e.target.value)} placeholder={T('modal.namePlaceholder')} autoFocus style={inputStyle}/>
+                  <input type="text" value={nom} onChange={e=>setNom(e.target.value)} onBlur={()=>touch('nom')} placeholder={T('modal.namePlaceholder')} autoFocus style={{...inputStyle,borderColor:touched.nom&&!nom.trim()?'#cc3333':'#ccc'}}/>
+                  {touched.nom&&!nom.trim()&&<div style={errStyle}>Champ requis</div>}
                 </div>
                 <div style={{marginBottom:'12px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.email')}</div>
-                  <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setEmailVerified(false);setVerifSent(false);setVerifCode('');setVerifError('');}} placeholder="votre@email.com" style={inputStyle}/>
+                  <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setEmailVerified(false);setVerifSent(false);setVerifCode('');setVerifError('');}} onBlur={()=>touch('email')} placeholder="votre@email.com" style={{...inputStyle,borderColor:touched.email&&!email.includes('@')?'#cc3333':'#ccc'}}/>
+                  {touched.email&&!email.includes('@')&&<div style={errStyle}>Adresse email invalide</div>}
+                  {touched.email&&email.includes('@')&&!emailVerified&&<div style={errStyle}>Email non vérifié — validez le code ci-dessous</div>}
                 </div>
-                <div style={{marginBottom:'12px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')} *</div><input type="tel" value={tel} onChange={e=>setTel(e.target.value)} placeholder={T('modal.phonePlaceholder')} style={inputStyle}/></div>
+                <div style={{marginBottom:'12px'}}>
+                  <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')} *</div>
+                  <input type="tel" value={tel} onChange={e=>setTel(e.target.value)} onBlur={()=>touch('tel')} placeholder={T('modal.phonePlaceholder')} style={{...inputStyle,borderColor:touched.tel&&!tel.trim()?'#cc3333':'#ccc'}}/>
+                  {touched.tel&&!tel.trim()&&<div style={errStyle}>Champ requis</div>}
+                </div>
                 <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
-                  <div style={{flex:1}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')} *</div><input type="text" value={ville} onChange={e=>setVille(e.target.value)} placeholder={T('modal.cityPlaceholder')} style={inputStyle}/></div>
-                  <div style={{flex:1}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')} *</div><input type="text" value={pays} onChange={e=>setPays(e.target.value)} placeholder={T('modal.countryPlaceholder')} style={inputStyle}/></div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.city')} *</div>
+                    <input type="text" value={ville} onChange={e=>setVille(e.target.value)} onBlur={()=>touch('ville')} placeholder={T('modal.cityPlaceholder')} style={{...inputStyle,borderColor:touched.ville&&!ville.trim()?'#cc3333':'#ccc'}}/>
+                    {touched.ville&&!ville.trim()&&<div style={errStyle}>Champ requis</div>}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.country')} *</div>
+                    <input type="text" value={pays} onChange={e=>setPays(e.target.value)} onBlur={()=>touch('pays')} placeholder={T('modal.countryPlaceholder')} style={{...inputStyle,borderColor:touched.pays&&!pays.trim()?'#cc3333':'#ccc'}}/>
+                    {touched.pays&&!pays.trim()&&<div style={errStyle}>Champ requis</div>}
+                  </div>
                 </div>
                 <div style={{marginBottom:'12px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'8px',textTransform:'uppercase'}}>Délai du projet *</div>
                   <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
                     {[['immediat','⚡ Immédiat'],['3-6mois','📅 3 à 6 mois'],['6plus','🕐 Plus de 6 mois']].map(([val,label])=>(
-                      <label key={val} style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'12px',fontFamily:'Courier New,monospace',padding:'8px 10px',border:`1px solid ${delai===val?'#222':'#ddd'}`,borderRadius:'2px',background:delai===val?'#f9f9f9':'#fff'}}>
-                        <input type="radio" name="delai" value={val} checked={delai===val} onChange={e=>setDelai(e.target.value)} style={{cursor:'pointer'}}/>
+                      <label key={val} style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'12px',fontFamily:'Courier New,monospace',padding:'8px 10px',border:`1px solid ${delai===val?'#222':touched.delai&&!delai?'#cc3333':'#ddd'}`,borderRadius:'2px',background:delai===val?'#f9f9f9':'#fff'}}>
+                        <input type="radio" name="delai" value={val} checked={delai===val} onChange={e=>{setDelai(e.target.value);touch('delai');}} style={{cursor:'pointer'}}/>
                         {label}
                       </label>
                     ))}
                   </div>
+                  {touched.delai&&!delai&&<div style={errStyle}>Sélectionnez un délai</div>}
                 </div>
                 <div style={{marginBottom:'16px'}}><div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.message')}</div><textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder={T('modal.messagePlaceholder')} rows={3} style={{...inputStyle,resize:'vertical'}}/></div>
 
@@ -1765,10 +1785,12 @@
                   <button onClick={onClose} style={{flex:1,padding:'10px',background:'#fff',border:'1px solid #bbb',cursor:'pointer',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'1px',color:'#666'}}>
                     Annuler
                   </button>
-                  <button onClick={send} disabled={!isValid || status==='sending'}
-                    style={{flex:2,padding:'10px',background:isValid?'#222':'#ccc',color:'#fff',border:'none',cursor:isValid?'pointer':'not-allowed',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'2px',transition:'background 0.2s'}}>
-                    {status==='sending' ? T('modal.sending') : T('modal.send')}
-                  </button>
+                  <div style={{flex:2}} onClick={()=>{if(!isValid)touchAll();}}>
+                    <button onClick={send} disabled={!isValid || status==='sending'}
+                      style={{width:'100%',padding:'10px',background:isValid?'#222':'#ccc',color:'#fff',border:'none',cursor:isValid?'pointer':'not-allowed',fontFamily:'Courier New,monospace',fontSize:'11px',letterSpacing:'2px',transition:'background 0.2s'}}>
+                      {status==='sending' ? T('modal.sending') : T('modal.send')}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
