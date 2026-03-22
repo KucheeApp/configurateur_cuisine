@@ -1711,7 +1711,7 @@
                   <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setEmailVerified(false);setVerifSent(false);setVerifCode('');setVerifError('');}} onFocus={()=>setTouched(t=>({...t,email:false}))} onBlur={()=>touch('email')} placeholder="votre@email.com" style={{...inputStyle,borderColor:touched.email&&(!email.trim()||!email.includes('@'))?'#cc3333':'#ccc'}}/>
                   {touched.email&&!email.trim()&&<div style={errStyle}>Champ requis</div>}
                   {touched.email&&email.trim().length>0&&!email.includes('@')&&<div style={errStyle}>Adresse email invalide</div>}
-                  {touched.email&&email.includes('@')&&!emailVerified&&<div style={errStyle}>Email non vérifié — validez le code ci-dessous</div>}
+                  {touched.email&&email.includes('@')&&!emailVerified&&!verifSent&&!verifLoading&&<div style={errStyle}>Email non vérifié — cliquez sur "Recevoir le code" ci-dessous</div>}
                 </div>
                 <div style={{marginBottom:'12px'}}>
                   <div style={{fontSize:'9px',letterSpacing:'2px',color:'#888',marginBottom:'4px',textTransform:'uppercase'}}>{T('modal.phone')} *</div>
