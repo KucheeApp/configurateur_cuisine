@@ -1654,7 +1654,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              revendeur_id:   window.REVENDEUR_CONFIG?.revendeurId || null,
+              revendeur_id:   window.REVENDEUR_CONFIG?.revendeurId || 'f16be674-3fc9-44a2-a746-dddae12b5480',
               nom:            nom.trim(),
               email:          email.trim(),
               email_verified: emailVerified,
