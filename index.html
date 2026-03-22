@@ -1689,7 +1689,7 @@
               pngB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
             } catch(e) { console.warn('PNG A capture failed', e); }
           }
-          if (layoutMode === 'enL' && svgRefB && svgRefB.current && window.htmlToImage) {
+          if ((layoutMode === 'enL' || layoutMode === 'doubleLineaire') && svgRefB && svgRefB.current && window.htmlToImage) {
             try {
               const dataUrl = await htmlToImage.toPng(svgRefB.current, { backgroundColor: '#ffffff' });
               pngBB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
