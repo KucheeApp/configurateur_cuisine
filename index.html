@@ -1622,7 +1622,7 @@
     }
 
     // ====== MODAL LEAD ======
-   function LeadModal({ onClose, quoteSummary, svgRef, T }) {
+   function LeadModal({ onClose, quoteSummary, svgRef, svgRefB, layoutMode, T }) {
       const [nom,setNom]=React.useState('');
       const [email,setEmail]=React.useState('');
       const [tel,setTel]=React.useState('');
@@ -1679,12 +1679,18 @@
         if (!isValid) return;
         setStatus('sending');
         try {
-          let pngB64 = '';
+          let pngB64 = '', pngBB64 = '';
           if (svgRef && svgRef.current && window.htmlToImage) {
             try {
               const dataUrl = await htmlToImage.toPng(svgRef.current, { backgroundColor: '#ffffff' });
               pngB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
-            } catch(e) { console.warn('PNG capture failed', e); }
+            } catch(e) { console.warn('PNG A capture failed', e); }
+          }
+          if (layoutMode === 'enL' && svgRefB && svgRefB.current && window.htmlToImage) {
+            try {
+              const dataUrl = await htmlToImage.toPng(svgRefB.current, { backgroundColor: '#ffffff' });
+              pngBB64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+            } catch(e) { console.warn('PNG B capture failed', e); }
           }
           const res = await fetch('https://app.kuchee.com/api/leads', {
             method: 'POST',
@@ -1701,6 +1707,7 @@
               delai:          delai,
               recap:          quoteSummary,
               png:            pngB64,
+              pngB:           pngBB64,
             }),
           });
           const json = await res.json().catch(() => ({}));
@@ -3572,6 +3579,8 @@
               onClose={() => setShowLeadModal(false)}
               quoteSummary={quoteSummary}
               svgRef={svgRef}
+              svgRefB={svgRefB}
+              layoutMode={layoutMode}
               T={T}
             />
           )}
